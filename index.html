@@ -71,4 +71,224 @@
       <h1>TITSA Asistente</h1>
       <p>Información de líneas y horarios</p>
     </div>
-    <div class=
+    <div class="status"><div class="status-dot"></div><span>En línea</span></div>
+  </div>
+
+  <div id="config-panel">
+    <label>🔑 OpenAI API Key:</label>
+    <input id="apikey-field" type="password" placeholder="sk-..." />
+    <button id="save-key-btn" onclick="saveKey()">Guardar</button>
+  </div>
+
+  <div class="parada-banner" id="parada-banner" style="display:none">
+    <span class="parada-num" id="parada-num"></span>
+    <span class="parada-nombre" id="parada-nombre"></span>
+  </div>
+
+  <div class="chat" id="chat"></div>
+
+  <div class="chips" id="chips" style="display:none">
+    <button class="chip" onclick="sendChip('¿Qué líneas paran aquí?')">Líneas disponibles</button>
+    <button class="chip" onclick="sendChip('¿Cuáles son los horarios de hoy?')">Horarios de hoy</button>
+    <button class="chip" onclick="sendChip('¿Cuánto cuesta el billete?')">Precio billete</button>
+    <button class="chip" onclick="cambiarParada()">Cambiar línea</button>
+  </div>
+
+  <div class="input-area">
+    <input class="chat-input" id="input" type="text" placeholder="Escribe tu pregunta…" />
+    <button class="send-btn" id="send-btn" onclick="handleSend()">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+const PROXY = 'https://titsa-proxy-f1oci50yf-olmocabreragomez-4505s-projects.vercel.app';
+let OPENAI_KEY  = localStorage.getItem('titsa_openai_key') || '';
+let paradaActual = null;
+let lineaCache   = {};
+let historial    = [];
+
+if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
+
+function saveKey() {
+  const val = document.getElementById('apikey-field').value.trim();
+  if (!val.startsWith('sk-')) { alert('La key debe empezar por sk-'); return; }
+  OPENAI_KEY = val;
+  localStorage.setItem('titsa_openai_key', val);
+  document.getElementById('config-panel').style.display = 'none';
+  init();
+}
+
+async function init() {
+  addBotMsg('¡Hola! Soy el asistente de TITSA 🚌<br>Puedo informarte sobre horarios y líneas de cualquier parada de Tenerife consultando datos en tiempo real.<br><br>Dime qué <strong>número de línea</strong> quieres consultar o pregúntame lo que necesites.');
+  document.getElementById('input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSend();
+  });
+}
+
+async function consultarLinea(numLinea) {
+  if (lineaCache[numLinea]) return lineaCache[numLinea];
+  try {
+    const res  = await fetch(`${PROXY}/api/titsa?linea=${numLinea}`);
+    const data = await res.json();
+    if (!data.error) lineaCache[numLinea] = data;
+    return data;
+  } catch (e) {
+    return { error: 'No se pudo conectar con TITSA' };
+  }
+}
+
+function detectarLineas(texto) {
+  const matches = texto.match(/\b(\d{2,3})\b/g);
+  return matches ? [...new Set(matches)] : [];
+}
+
+function setParada(nombre) {
+  paradaActual = nombre;
+  document.getElementById('parada-num').textContent    = '';
+  document.getElementById('parada-nombre').textContent = nombre;
+  document.getElementById('parada-banner').style.display = 'flex';
+  document.getElementById('chips').style.display = 'flex';
+}
+
+function cambiarParada() {
+  paradaActual = null;
+  historial = [];
+  document.getElementById('parada-banner').style.display = 'none';
+  document.getElementById('chips').style.display = 'none';
+  addBotMsg('De acuerdo, ¿qué línea quieres consultar?');
+}
+
+function now() {
+  return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addBotMsg(html) {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = `<div class="bubble">${html}</div><span class="msg-time">${now()}</span>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUserMsg(text) {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="bubble">${text}</div><span class="msg-time">${now()}</span>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.id = 'typing'; el.className = 'msg bot';
+  el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function setLoading(on) {
+  document.getElementById('input').disabled    = on;
+  document.getElementById('send-btn').disabled = on;
+  document.querySelectorAll('.chip').forEach(c => c.style.pointerEvents = on ? 'none' : '');
+}
+
+async function handleSend() {
+  const input = document.getElementById('input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await processMessage(text);
+}
+
+async function sendChip(text) {
+  await processMessage(text);
+}
+
+async function processMessage(text) {
+  if (!OPENAI_KEY) {
+    addBotMsg('⚠️ Introduce tu API Key de OpenAI arriba para activar el asistente.');
+    return;
+  }
+  addUserMsg(text);
+  historial.push({ role: 'user', content: text });
+  setLoading(true);
+  showTyping();
+
+  const lineasMencionadas = detectarLineas(text);
+  const datosLineas = {};
+  for (const num of lineasMencionadas.slice(0, 3)) {
+    const datos = await consultarLinea(num);
+    if (!datos.error) {
+      datosLineas[num] = datos;
+      if (!paradaActual) setParada(`Línea ${datos.linea} – ${datos.nombre}`);
+    }
+  }
+
+  try {
+    const respuesta = await llamarOpenAI(datosLineas);
+    removeTyping();
+    addBotMsg(respuesta);
+    historial.push({ role: 'assistant', content: respuesta });
+  } catch (e) {
+    removeTyping();
+    addBotMsg('❌ Error al conectar con la IA: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function llamarOpenAI(datosLineas = {}) {
+  let contextoLineas = '';
+  if (Object.keys(datosLineas).length > 0) {
+    contextoLineas = Object.values(datosLineas).map(l => `
+LÍNEA ${l.linea}: ${l.nombre}
+Recorrido: ${l.recorrido}
+Duración: ${l.duracion}
+Horarios:
+${l.horarios.join('\n')}
+${l.notas ? 'Notas: ' + l.notas : ''}
+Más info: ${l.url}
+    `).join('\n---\n');
+  }
+
+  const sistema = `
+Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).
+Responde siempre en español, de forma amable, breve y clara.
+Usa HTML sencillo: negrita con <strong>, saltos de línea con <br>. Nada más.
+NO menciones que eres una IA ni OpenAI. Eres el asistente de TITSA.
+Si el usuario pregunta por la próxima guagua en tiempo real, dile que consulte www.titsa.com o la app de TITSA.
+${contextoLineas ? 'DATOS ACTUALES DE TITSA:\n' + contextoLineas : 'El usuario no ha mencionado una línea concreta. Pídele que te diga el número de línea que necesita.'}
+  `.trim();
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 400,
+      messages: [{ role: 'system', content: sistema }, ...historial]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || res.statusText);
+  }
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+if (OPENAI_KEY) init();
+</script>
+</body>
+</html>
