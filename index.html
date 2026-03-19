@@ -9,12 +9,12 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --verde: #1a7a3c; --verde-oscuro: #155f30; --amarillo: #f5c800;
-      --amarillo-texto: #1a4a22; --fondo: #f4f4f0; --blanco: #ffffff;
-      --texto: #1a1a1a; --texto-suave: #666; --borde: rgba(0,0,0,0.1);
+      --verde: #1a7a3c; --amarillo: #f5c800; --amarillo-texto: #1a4a22;
+      --fondo: #f4f4f0; --blanco: #ffffff; --texto: #1a1a1a;
+      --texto-suave: #666; --borde: rgba(0,0,0,0.1);
     }
-    body { background: var(--fondo); font-family: 'DM Sans', sans-serif; min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; height: 100dvh; max-height: 780px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
+    body { background: var(--fondo); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; height: 100vh; max-height: 780px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
     .header { background: var(--verde); padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
     .header-icon { width: 38px; height: 38px; background: var(--amarillo); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .header-icon svg { width: 22px; height: 22px; }
@@ -23,17 +23,19 @@
     .status { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.7); }
     .status-dot { width: 7px; height: 7px; background: #5dde8a; border-radius: 50%; animation: pulse 2s infinite; }
     @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(93,222,138,0.4); } 50% { box-shadow: 0 0 0 4px rgba(93,222,138,0); } }
+    #config-panel { display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex-shrink: 0; background: #fff8e1; border-bottom: 1px solid #f5c800; }
+    #config-panel label { font-size: 11px; color: #795900; white-space: nowrap; }
+    #apikey-field { flex:1; font-size: 11px; font-family:'DM Mono',monospace; padding: 4px 8px; border:1px solid #f5c800; border-radius:6px; min-width: 0; }
+    #save-key-btn { background:var(--verde); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; white-space: nowrap; }
     .parada-banner { background: var(--amarillo); padding: 9px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .parada-num { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--verde); background: rgba(26,122,60,0.12); padding: 2px 8px; border-radius: 6px; }
     .parada-nombre { font-size: 12px; font-weight: 500; color: var(--amarillo-texto); }
     .chat { flex: 1; overflow-y: auto; background: var(--fondo); padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
     .msg { display: flex; flex-direction: column; gap: 3px; max-width: 90%; animation: fadeUp 0.2s ease; }
     @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
     .msg.bot { align-self: flex-start; }
     .msg.user { align-self: flex-end; }
-    .bubble { padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
-    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; }
-    .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; }
+    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
+    .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 4px; background: var(--fondo); flex-shrink: 0; }
     .chip { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--borde); background: var(--blanco); color: var(--texto); cursor: pointer; transition: all 0.15s; }
@@ -51,10 +53,6 @@
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
-    #config-panel { display: flex; align-items: center; gap: 6px; padding: 6px 12px; flex-shrink: 0; background: #fff8e1; border-bottom: 1px solid #f5c800; }
-    #config-panel label { font-size: 11px; color: #795900; white-space: nowrap; }
-    #apikey-field { flex:1; font-size: 11px; font-family:'DM Mono',monospace; padding: 3px 8px; border:1px solid #f5c800; border-radius:6px; }
-    #save-key-btn { background:var(--verde); color:#fff; border:none; border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer; }
   </style>
 </head>
 <body>
@@ -75,23 +73,22 @@
   </div>
 
   <div id="config-panel">
-    <label>🔑 OpenAI API Key:</label>
+    <label>🔑 API Key:</label>
     <input id="apikey-field" type="password" placeholder="sk-..." />
     <button id="save-key-btn" onclick="saveKey()">Guardar</button>
   </div>
 
   <div class="parada-banner" id="parada-banner" style="display:none">
-    <span class="parada-num" id="parada-num"></span>
     <span class="parada-nombre" id="parada-nombre"></span>
   </div>
 
   <div class="chat" id="chat"></div>
 
   <div class="chips" id="chips" style="display:none">
-    <button class="chip" onclick="sendChip('¿Qué líneas paran aquí?')">Líneas disponibles</button>
-    <button class="chip" onclick="sendChip('¿Cuáles son los horarios de hoy?')">Horarios de hoy</button>
-    <button class="chip" onclick="sendChip('¿Cuánto cuesta el billete?')">Precio billete</button>
-    <button class="chip" onclick="cambiarParada()">Cambiar línea</button>
+    <button class="chip" onclick="sendChip('¿Cuáles son los horarios?')">Horarios</button>
+    <button class="chip" onclick="sendChip('¿Cuánto cuesta el billete?')">Precio</button>
+    <button class="chip" onclick="sendChip('¿Cuál es el recorrido?')">Recorrido</button>
+    <button class="chip" onclick="cambiarLinea()">Cambiar línea</button>
   </div>
 
   <div class="input-area">
@@ -104,12 +101,10 @@
 
 <script>
 const PROXY = 'https://titsa-proxy-f1oci50yf-olmocabreragomez-4505s-projects.vercel.app';
-let OPENAI_KEY  = localStorage.getItem('titsa_openai_key') || '';
-let paradaActual = null;
-let lineaCache   = {};
-let historial    = [];
-
-if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
+let OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
+let lineaActual = null;
+let lineaCache  = {};
+let historial   = [];
 
 function saveKey() {
   const val = document.getElementById('apikey-field').value.trim();
@@ -117,47 +112,6 @@ function saveKey() {
   OPENAI_KEY = val;
   localStorage.setItem('titsa_openai_key', val);
   document.getElementById('config-panel').style.display = 'none';
-  init();
-}
-
-async function init() {
-  addBotMsg('¡Hola! Soy el asistente de TITSA 🚌<br>Puedo informarte sobre horarios y líneas de cualquier parada de Tenerife consultando datos en tiempo real.<br><br>Dime qué <strong>número de línea</strong> quieres consultar o pregúntame lo que necesites.');
-  document.getElementById('input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleSend();
-  });
-}
-
-async function consultarLinea(numLinea) {
-  if (lineaCache[numLinea]) return lineaCache[numLinea];
-  try {
-    const res  = await fetch(`${PROXY}/api/titsa?linea=${numLinea}`);
-    const data = await res.json();
-    if (!data.error) lineaCache[numLinea] = data;
-    return data;
-  } catch (e) {
-    return { error: 'No se pudo conectar con TITSA' };
-  }
-}
-
-function detectarLineas(texto) {
-  const matches = texto.match(/\b(\d{2,3})\b/g);
-  return matches ? [...new Set(matches)] : [];
-}
-
-function setParada(nombre) {
-  paradaActual = nombre;
-  document.getElementById('parada-num').textContent    = '';
-  document.getElementById('parada-nombre').textContent = nombre;
-  document.getElementById('parada-banner').style.display = 'flex';
-  document.getElementById('chips').style.display = 'flex';
-}
-
-function cambiarParada() {
-  paradaActual = null;
-  historial = [];
-  document.getElementById('parada-banner').style.display = 'none';
-  document.getElementById('chips').style.display = 'none';
-  addBotMsg('De acuerdo, ¿qué línea quieres consultar?');
 }
 
 function now() {
@@ -166,7 +120,7 @@ function now() {
 
 function addBotMsg(html) {
   const chat = document.getElementById('chat');
-  const el   = document.createElement('div');
+  const el = document.createElement('div');
   el.className = 'msg bot';
   el.innerHTML = `<div class="bubble">${html}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el);
@@ -175,7 +129,7 @@ function addBotMsg(html) {
 
 function addUserMsg(text) {
   const chat = document.getElementById('chat');
-  const el   = document.createElement('div');
+  const el = document.createElement('div');
   el.className = 'msg user';
   el.innerHTML = `<div class="bubble">${text}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el);
@@ -184,7 +138,7 @@ function addUserMsg(text) {
 
 function showTyping() {
   const chat = document.getElementById('chat');
-  const el   = document.createElement('div');
+  const el = document.createElement('div');
   el.id = 'typing'; el.className = 'msg bot';
   el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   chat.appendChild(el);
@@ -197,14 +151,45 @@ function removeTyping() {
 }
 
 function setLoading(on) {
-  document.getElementById('input').disabled    = on;
+  document.getElementById('input').disabled = on;
   document.getElementById('send-btn').disabled = on;
-  document.querySelectorAll('.chip').forEach(c => c.style.pointerEvents = on ? 'none' : '');
+}
+
+async function consultarLinea(num) {
+  if (lineaCache[num]) return lineaCache[num];
+  try {
+    const res = await fetch(`${PROXY}/api/titsa?linea=${num}`);
+    const data = await res.json();
+    if (!data.error) lineaCache[num] = data;
+    return data;
+  } catch(e) {
+    return { error: 'Sin conexión' };
+  }
+}
+
+function detectarLineas(texto) {
+  const m = texto.match(/\b(\d{2,3})\b/g);
+  return m ? [...new Set(m)] : [];
+}
+
+function setLinea(datos) {
+  lineaActual = datos;
+  document.getElementById('parada-nombre').textContent = `Línea ${datos.linea} – ${datos.nombre}`;
+  document.getElementById('parada-banner').style.display = 'flex';
+  document.getElementById('chips').style.display = 'flex';
+}
+
+function cambiarLinea() {
+  lineaActual = null;
+  historial = [];
+  document.getElementById('parada-banner').style.display = 'none';
+  document.getElementById('chips').style.display = 'none';
+  addBotMsg('De acuerdo, ¿qué línea quieres consultar?');
 }
 
 async function handleSend() {
   const input = document.getElementById('input');
-  const text  = input.value.trim();
+  const text = input.value.trim();
   if (!text) return;
   input.value = '';
   await processMessage(text);
@@ -216,7 +201,7 @@ async function sendChip(text) {
 
 async function processMessage(text) {
   if (!OPENAI_KEY) {
-    addBotMsg('⚠️ Introduce tu API Key de OpenAI arriba para activar el asistente.');
+    addBotMsg('⚠️ Introduce tu API Key de OpenAI arriba y pulsa <strong>Guardar</strong>.');
     return;
   }
   addUserMsg(text);
@@ -224,14 +209,11 @@ async function processMessage(text) {
   setLoading(true);
   showTyping();
 
-  const lineasMencionadas = detectarLineas(text);
+  const nums = detectarLineas(text);
   const datosLineas = {};
-  for (const num of lineasMencionadas.slice(0, 3)) {
-    const datos = await consultarLinea(num);
-    if (!datos.error) {
-      datosLineas[num] = datos;
-      if (!paradaActual) setParada(`Línea ${datos.linea} – ${datos.nombre}`);
-    }
+  for (const n of nums.slice(0, 3)) {
+    const d = await consultarLinea(n);
+    if (!d.error) { datosLineas[n] = d; if (!lineaActual) setLinea(d); }
   }
 
   try {
@@ -239,56 +221,38 @@ async function processMessage(text) {
     removeTyping();
     addBotMsg(respuesta);
     historial.push({ role: 'assistant', content: respuesta });
-  } catch (e) {
+  } catch(e) {
     removeTyping();
-    addBotMsg('❌ Error al conectar con la IA: ' + e.message);
+    addBotMsg('❌ Error: ' + e.message);
   } finally {
     setLoading(false);
   }
 }
 
-async function llamarOpenAI(datosLineas = {}) {
-  let contextoLineas = '';
-  if (Object.keys(datosLineas).length > 0) {
-    contextoLineas = Object.values(datosLineas).map(l => `
-LÍNEA ${l.linea}: ${l.nombre}
-Recorrido: ${l.recorrido}
-Duración: ${l.duracion}
-Horarios:
-${l.horarios.join('\n')}
-${l.notas ? 'Notas: ' + l.notas : ''}
-Más info: ${l.url}
-    `).join('\n---\n');
-  }
+async function llamarOpenAI(datosLineas) {
+  let ctx = Object.keys(datosLineas).length > 0
+    ? Object.values(datosLineas).map(l =>
+        `LÍNEA ${l.linea}: ${l.nombre}\nRecorrido: ${l.recorrido}\nDuración: ${l.duracion}\nHorarios:\n${l.horarios.join('\n')}\n${l.notas ? 'Notas: '+l.notas : ''}`
+      ).join('\n---\n')
+    : 'El usuario no ha indicado línea. Pídele el número de línea.';
 
-  const sistema = `
-Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).
-Responde siempre en español, de forma amable, breve y clara.
-Usa HTML sencillo: negrita con <strong>, saltos de línea con <br>. Nada más.
-NO menciones que eres una IA ni OpenAI. Eres el asistente de TITSA.
-Si el usuario pregunta por la próxima guagua en tiempo real, dile que consulte www.titsa.com o la app de TITSA.
-${contextoLineas ? 'DATOS ACTUALES DE TITSA:\n' + contextoLineas : 'El usuario no ha mencionado una línea concreta. Pídele que te diga el número de línea que necesita.'}
-  `.trim();
+  const sistema = `Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife). Responde en español, de forma amable y clara. Usa <strong> y <br> para formatear. No menciones OpenAI. Si preguntan por tiempo real diles que usen www.titsa.com.\n\nDATOS:\n${ctx}`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: 400,
-      messages: [{ role: 'system', content: sistema }, ...historial]
-    })
+    body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 400, messages: [{ role: 'system', content: sistema }, ...historial] })
   });
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error?.message || res.statusText);
-  }
+  if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || res.statusText); }
   const data = await res.json();
   return data.choices[0].message.content;
 }
 
-if (OPENAI_KEY) init();
+// Arranque siempre
+if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
+addBotMsg('¡Hola! Soy el asistente de TITSA 🚌<br>Dime el <strong>número de línea</strong> que quieres consultar y te doy los horarios y el recorrido.');
+document.getElementById('input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
 </script>
 </body>
 </html>
