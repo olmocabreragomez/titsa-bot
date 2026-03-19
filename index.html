@@ -95,7 +95,7 @@
 </div>
 
 <script>
-const PROXY = 'https://https://titsa-proxy-p1z7.vercel.app-olmocabreragomez-4505s-projects.vercel.app';
+const PROXY = 'https://titsa-proxy-p1z7.vercel.app';
 let OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
 let lineaActual = null;
 let lineaCache  = {};
@@ -181,7 +181,6 @@ async function consultarLinea(num) {
 }
 
 function extraerNumeroLinea(texto) {
-  // Buscar patrones como "línea 52", "linea 103", "la 14", o solo números de 2-3 dígitos
   const patrones = [
     /l[ií]nea\s+(\d{1,3})/i,
     /^(\d{1,3})$/,
@@ -214,7 +213,6 @@ async function processMessage(text) {
   setLoading(true);
   showTyping();
 
-  // Detectar número de línea en el mensaje o usar la línea actual
   let datosLinea = lineaActual;
   const numDetectado = extraerNumeroLinea(text);
 
@@ -223,7 +221,7 @@ async function processMessage(text) {
     if (!datos.error) {
       datosLinea = datos;
       setLinea(datos);
-      if (lineaActual !== datos) historial = []; // reset si cambia de línea
+      if (lineaActual !== datos) historial = [];
     } else {
       removeTyping();
       addBotMsg(`No he encontrado la línea <strong>${numDetectado}</strong> en TITSA. Comprueba el número e inténtalo de nuevo.`);
@@ -251,26 +249,20 @@ async function llamarOpenAI(datosLinea) {
   let contexto;
 
   if (datosLinea && !datosLinea.error) {
-    contexto = `DATOS REALES OBTENIDOS DE TITSA.COM PARA LA LÍNEA ${datosLinea.linea}:
+    contexto = `DATOS REALES DE TITSA.COM PARA LA LÍNEA ${datosLinea.linea}:
 Nombre: ${datosLinea.nombre}
-Recorrido: ${datosLinea.recorrido}
-Duración aproximada: ${datosLinea.duracion}
-Horarios completos:
-${datosLinea.horarios.join('\n')}
-${datosLinea.notas ? 'Notas: ' + datosLinea.notas : ''}
-Fuente: ${datosLinea.url}
+Contenido con horarios:
+${datosLinea.contenido}
 
-INSTRUCCIÓN IMPORTANTE: Responde ÚNICAMENTE con los datos anteriores. NO inventes ni añadas información que no esté aquí.`;
+INSTRUCCIÓN: Usa SOLO estos datos para responder. NO inventes nada.`;
   } else {
-    contexto = 'El usuario no ha indicado ninguna línea válida todavía. Pídele que te diga el número de línea que quiere consultar.';
+    contexto = 'El usuario no ha indicado línea. Pídele el número de línea.';
   }
 
   const sistema = `Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).
-Responde siempre en español, de forma amable y clara.
-Usa HTML simple: <strong> para negrita, <br> para saltos de línea.
-NUNCA inventes datos. NUNCA uses tu conocimiento previo sobre líneas de bus. USA SOLO los datos que te proporciono.
-Si preguntan por tiempo real (próxima guagua), diles que usen www.titsa.com o la app de TITSA.
-
+Responde en español, de forma amable y clara.
+Usa <strong> y <br> para formatear. Nada más.
+NUNCA inventes datos ni uses conocimiento propio sobre líneas de bus.
 ${contexto}`;
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
