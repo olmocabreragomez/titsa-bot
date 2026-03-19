@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TITSA – Asistente de Parada</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --verde: #1a7a3c;
+      --verde-oscuro: #155f30;
+      --amarillo: #f5c800;
+      --amarillo-texto: #1a4a22;
+      --fondo: #f4f4f0;
+      --blanco: #ffffff;
+      --texto: #1a1a1a;
+      --texto-suave: #666;
+      --borde: rgba(0,0,0,0.1);
+      --radio: 14px;
+    }
+
+    body {
+      background: var(--fondo);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      max-height: 780px;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+    }
+
+    /* HEADER */
+    .header {
+      background: var(--verde);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .header-icon {
+      width: 38px; height: 38px;
+      background: var(--amarillo);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .header-icon svg { width: 22px; height: 22px; }
+
+    .header-info h1 { font-size: 15px; font-weight: 600; color: #fff; }
+    .header-info p  { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
+
+    .status {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; color: rgba(255,255,255,0.7);
+    }
+    .status-dot {
+      width: 7px; height: 7px;
+      background: #5dde8a; border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(93,222,138,0.4); }
+      50%      { box-shadow: 0 0 0 4px rgba(93,222,138,0); }
+    }
+
+    /* PARADA BANNER */
+    .parada-banner {
+      background: var(--amarillo);
+      padding: 9px 16px;
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .parada-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 12px; font-weight: 500;
+      color: var(--verde);
+      background: rgba(26,122,60,0.12);
+      padding: 2px 8px; border-radius: 6px;
+    }
+
+    .parada-nombre { font-size: 12px; font-weight: 500; color: var(--amarillo-texto); }
+
+    /* CHAT */
+    .chat {
+      flex: 1;
+      overflow-y: auto;
+      background: var(--fondo);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      scroll-behavior: smooth;
+    }
+
+    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 90%; animation: fadeUp 0.2s ease; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+
+    .msg.bot  { align-self: flex-start; }
+    .msg.user { align-self: flex-end; }
+
+    .bubble {
+      padding: 10px 14px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      border-radius: 4px 16px 16px 16px;
+    }
+
+    .bot  .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; }
+    .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; }
+
+    .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
+
+    /* BUS CARD */
+    .bus-card {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      border-left: 3px solid var(--verde);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+
+    .bus-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--borde);
+    }
+    .bus-row:last-child { border-bottom: none; }
+
+    .line-badge {
+      background: var(--verde); color: var(--amarillo);
+      font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+      padding: 2px 7px; border-radius: 5px; flex-shrink: 0;
+    }
+
+    .bus-dest { font-size: 12px; color: var(--texto-suave); flex: 1; }
+    .bus-time { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; color: var(--verde); }
+    .bus-time.pronto { color: #d85a30; }
+
+    /* CHIPS */
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 8px 12px 4px;
+      background: var(--fondo);
+      flex-shrink: 0;
+    }
+
+    .chip {
+      font-size: 12px; font-family: 'DM Sans', sans-serif;
+      padding: 6px 12px; border-radius: 20px;
+      border: 1px solid var(--borde);
+      background: var(--blanco); color: var(--texto);
+      cursor: pointer; transition: all 0.15s;
+    }
+    .chip:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
+
+    /* INPUT */
+    .input-area {
+      background: var(--blanco);
+      padding: 10px 12px;
+      display: flex; gap: 8px; align-items: center;
+      border-top: 1px solid var(--borde);
+      flex-shrink: 0;
+    }
+
+    .chat-input {
+      flex: 1; border: 1px solid var(--borde); border-radius: 22px;
+      padding: 9px 16px; font-size: 13.5px; font-family: 'DM Sans', sans-serif;
+      background: var(--fondo); color: var(--texto); outline: none;
+      transition: border-color 0.15s;
+    }
+    .chat-input:focus { border-color: var(--verde); }
+    .chat-input:disabled { opacity: 0.5; }
+
+    .send-btn {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--verde); border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: opacity 0.15s;
+    }
+    .send-btn:hover { opacity: 0.85; }
+    .send-btn:disabled { opacity: 0.4; cursor: default; }
+    .send-btn svg { width: 15px; height: 15px; }
+
+    /* TYPING */
+    .typing-indicator {
+      display: flex; align-items: center; gap: 4px;
+      padding: 10px 14px;
+      background: var(--blanco); border: 1px solid var(--borde);
+      border-radius: 4px 16px 16px 16px;
+      width: fit-content;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #bbb; animation: bounce 1.2s infinite;
+    }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-5px); }
+    }
+
+    /* API KEY BANNER */
+    .apikey-banner {
+      background: #fff8e1; border-bottom: 1px solid #f5c800;
+      padding: 8px 14px; font-size: 12px; color: #795900;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .apikey-input {
+      flex: 1; border: 1px solid #f5c800; border-radius: 6px;
+      padding: 4px 8px; font-size: 12px; font-family: 'DM Mono', monospace;
+      background: #fff; outline: none;
+    }
+    .apikey-btn {
+      background: var(--verde); color: #fff; border: none;
+      border-radius: 6px; padding: 4px 10px; font-size: 12px;
+      cursor: pointer; font-family: 'DM Sans', sans-serif;
+    }
+
+    /* CONFIG panel */
+    #config-panel { display: flex; align-items: center; gap: 6px; padding: 6px 12px; flex-shrink: 0; background: #fff8e1; border-bottom: 1px solid #f5c800; }
+    #config-panel label { font-size: 11px; color: #795900; white-space: nowrap; }
+    #apikey-field { flex:1; font-size: 11px; font-family:'DM Mono',monospace; padding: 3px 8px; border:1px solid #f5c800; border-radius:6px; }
+    #save-key-btn { background:var(--verde); color:#fff; border:none; border-radius:6px; padding:3px 10px; font-size:11px; cursor:pointer; }
+  </style>
+</head>
+<body>
+
+<div class="app">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1a7a3c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 10h18M3 10l3-6h12l3 6M3 10v8a1 1 0 001 1h1m15-9v8a1 1 0 01-1 1h-1M7 19h10M7 19a2 2 0 01-2-2v-1h14v1a2 2 0 01-2 2"/>
+        <circle cx="7.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
+        <circle cx="16.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
+      </svg>
+    </div>
+    <div class="header-info">
+      <h1>TITSA Asistente</h1>
+      <p>Información de líneas y horarios</p>
+    </div>
+    <div class="status">
+      <div class="status-dot"></div>
+      <span>En línea</span>
+    </div>
+  </div>
+
+  <!-- API KEY CONFIG (se oculta una vez guardada) -->
+  <div id="config-panel">
+    <label>🔑 OpenAI API Key:</label>
+    <input id="apikey-field" type="password" placeholder="sk-..." />
+    <button id="save-key-btn" onclick="saveKey()">Guardar</button>
+  </div>
+
+  <!-- PARADA ACTIVA (se muestra cuando el usuario indica su parada) -->
+  <div class="parada-banner" id="parada-banner" style="display:none">
+    <span class="parada-num" id="parada-num"></span>
+    <span class="parada-nombre" id="parada-nombre"></span>
+  </div>
+
+  <!-- CHAT -->
+  <div class="chat" id="chat"></div>
+
+  <!-- CHIPS de acceso rápido (aparecen tras indicar la parada) -->
+  <div class="chips" id="chips" style="display:none">
+    <button class="chip" onclick="sendChip('¿Qué líneas paran aquí?')">Líneas disponibles</button>
+    <button class="chip" onclick="sendChip('¿Cuáles son los horarios de hoy?')">Horarios de hoy</button>
+    <button class="chip" onclick="sendChip('¿Cuánto cuesta el billete?')">Precio billete</button>
+    <button class="chip" onclick="cambiarParada()">Cambiar parada</button>
+  </div>
+
+  <!-- INPUT -->
+  <div class="input-area">
+    <input class="chat-input" id="input" type="text" placeholder="Escribe tu pregunta…" />
+    <button class="send-btn" id="send-btn" onclick="handleSend()">
+      <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
+    </button>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ────────────────────────────────────────────────────────────────
+let OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
+let titsaData  = null;
+let paradaActual = null;  // null hasta que el usuario la indique
+let historial  = [];
+
+if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
+
+function saveKey() {
+  const val = document.getElementById('apikey-field').value.trim();
+  if (!val.startsWith('sk-')) { alert('La key debe empezar por sk-'); return; }
+  OPENAI_KEY = val;
+  localStorage.setItem('titsa_openai_key', val);
+  document.getElementById('config-panel').style.display = 'none';
+  init();
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────
+async function init() {
+  const res = await fetch('data/titsa.json');
+  titsaData = await res.json();
+
+  addBotMsg('¡Hola! Soy el asistente de TITSA 🚌<br>Puedo informarte sobre líneas, horarios y precios de cualquier parada de Tenerife.<br><br>¿En qué parada estás? Dime el <strong>número de parada</strong> o el <strong>nombre del lugar</strong>.');
+
+  document.getElementById('input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSend();
+  });
+}
+
+// ─── DETECTAR PARADA ────────────────────────────────────────────────────────
+function detectarParadaEnTexto(texto) {
+  // Buscar número de parada en el mensaje
+  const match = texto.match(/\b(\d{3,5})\b/);
+  if (match) {
+    const id = match[1];
+    return titsaData.paradas.find(p => p.id === id) || null;
+  }
+  // Buscar por nombre aproximado
+  const t = texto.toLowerCase();
+  return titsaData.paradas.find(p =>
+    p.nombre.toLowerCase().includes(t) ||
+    p.municipio.toLowerCase().includes(t)
+  ) || null;
+}
+
+function setParada(parada) {
+  paradaActual = parada;
+  document.getElementById('parada-num').textContent    = '#' + parada.id;
+  document.getElementById('parada-nombre').textContent = parada.nombre + (parada.municipio ? ' — ' + parada.municipio : '');
+  document.getElementById('parada-banner').style.display = 'flex';
+  document.getElementById('chips').style.display = 'flex';
+}
+
+function cambiarParada() {
+  paradaActual = null;
+  historial = [];
+  document.getElementById('parada-banner').style.display = 'none';
+  document.getElementById('chips').style.display = 'none';
+  addBotMsg('De acuerdo, ¿en qué parada estás ahora?');
+}
+
+// ─── CHAT ──────────────────────────────────────────────────────────────────
+function now() {
+  return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+}
+
+function addBotMsg(html) {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.className = 'msg bot';
+  el.innerHTML = `<div class="bubble">${html}</div><span class="msg-time">${now()}</span>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function addUserMsg(text) {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.className = 'msg user';
+  el.innerHTML = `<div class="bubble">${text}</div><span class="msg-time">${now()}</span>`;
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function showTyping() {
+  const chat = document.getElementById('chat');
+  const el   = document.createElement('div');
+  el.id = 'typing'; el.className = 'msg bot';
+  el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+  chat.appendChild(el);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing');
+  if (t) t.remove();
+}
+
+function setLoading(on) {
+  document.getElementById('input').disabled    = on;
+  document.getElementById('send-btn').disabled = on;
+  document.querySelectorAll('.chip').forEach(c => c.style.pointerEvents = on ? 'none' : '');
+}
+
+// ─── SEND ──────────────────────────────────────────────────────────────────
+async function handleSend() {
+  const input = document.getElementById('input');
+  const text  = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  await processMessage(text);
+}
+
+async function sendChip(text) {
+  await processMessage(text);
+}
+
+async function processMessage(text) {
+  if (!OPENAI_KEY) {
+    addBotMsg('⚠️ Introduce tu API Key de OpenAI arriba para activar el asistente.');
+    return;
+  }
+
+  addUserMsg(text);
+
+  // Si aún no sabemos la parada, intentar detectarla
+  if (!paradaActual) {
+    const encontrada = detectarParadaEnTexto(text);
+    if (encontrada) {
+      setParada(encontrada);
+      historial = []; // reset historial al cambiar de parada
+      addBotMsg(`Perfecto, parada <strong>#${encontrada.id} – ${encontrada.nombre}</strong> (${encontrada.municipio}).<br>¿Qué necesitas saber?`);
+      return;
+    }
+    // No encontrada localmente → dejar que la IA pida aclaración
+  }
+
+  historial.push({ role: 'user', content: text });
+  setLoading(true);
+  showTyping();
+
+  try {
+    const respuesta = await llamarOpenAI();
+    removeTyping();
+    addBotMsg(respuesta);
+    historial.push({ role: 'assistant', content: respuesta });
+  } catch (e) {
+    removeTyping();
+    addBotMsg('❌ Error al conectar con la IA: ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ─── OPENAI ────────────────────────────────────────────────────────────────
+async function llamarOpenAI() {
+  let contextoParada = '';
+
+  if (paradaActual) {
+    const lineasParada = paradaActual.lineas
+      .map(lid => titsaData.lineas.find(l => l.id === lid))
+      .filter(Boolean);
+
+    contextoParada = `
+PARADA ACTUAL DEL USUARIO: #${paradaActual.id} – ${paradaActual.nombre} (${paradaActual.municipio})
+Líneas que paran aquí: ${lineasParada.map(l => l.id).join(', ')}
+
+${lineasParada.map(l => `
+LÍNEA ${l.id}: ${l.nombre}
+- Descripción: ${l.descripcion}
+- Paradas principales: ${l.paradas_principales.join(' → ')}
+- Precio billete: ${l.precio.toFixed(2)}€
+- Frecuencia hora punta: cada ${l.frecuencia_punta} min | hora valle: cada ${l.frecuencia_valle} min
+- Horario LABORABLE: ${l.horarios.laborable.primero} – ${l.horarios.laborable.ultimo}
+- Horario SÁBADO: ${l.horarios.sabado.primero} – ${l.horarios.sabado.ultimo}
+- Horario DOMINGO: ${l.horarios.domingo.primero} – ${l.horarios.domingo.ultimo}
+`).join('\n')}`;
+  } else {
+    // Listar todas las paradas disponibles para ayudar a identificar
+    contextoParada = `
+El usuario aún no ha indicado su parada. Paradas disponibles en el sistema:
+${titsaData.paradas.map(p => `#${p.id} – ${p.nombre} (${p.municipio})`).join('\n')}
+Pide amablemente que te diga el número de parada o el nombre del lugar.`;
+  }
+
+  const sistema = `
+Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).
+Responde siempre en español, de forma amable, breve y clara.
+Usa HTML sencillo: negrita con <strong>, saltos de línea con <br>. Nada más.
+NO menciones que eres una IA ni OpenAI. Eres el asistente de TITSA.
+No tienes datos en tiempo real. Si preguntan por la próxima guagua, indica que los tiempos exactos están en www.titsa.com o en la pantalla de la parada, y ofrece el horario de la línea.
+
+${contextoParada}
+  `.trim();
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + OPENAI_KEY
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      max_tokens: 400,
+      messages: [
+        { role: 'system', content: sistema },
+        ...historial
+      ]
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || res.statusText);
+  }
+
+  const data = await res.json();
+  return data.choices[0].message.content;
+}
+
+// ─── ARRANQUE ──────────────────────────────────────────────────────────────
+if (OPENAI_KEY) init();
+</script>
+</body>
+</html>
