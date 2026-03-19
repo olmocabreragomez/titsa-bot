@@ -1,0 +1,108 @@
+{
+  "lineas": [
+    {
+      "id": "L10",
+      "nombre": "Santa Cruz – La Laguna",
+      "descripcion": "Une el centro de Santa Cruz con La Laguna por la vía principal",
+      "frecuencia_punta": 10,
+      "frecuencia_valle": 20,
+      "precio": 1.45,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "Hospital Universitario", "La Laguna – Trinidad", "La Laguna – Centro"],
+      "horarios": {
+        "laborable": { "primero": "06:00", "ultimo": "23:30" },
+        "sabado":    { "primero": "06:30", "ultimo": "23:00" },
+        "domingo":   { "primero": "07:00", "ultimo": "22:30" }
+      }
+    },
+    {
+      "id": "L25",
+      "nombre": "Santa Cruz – Los Cristianos",
+      "descripcion": "Servicio exprés entre Santa Cruz y el sur de la isla",
+      "frecuencia_punta": 30,
+      "frecuencia_valle": 60,
+      "precio": 3.15,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "Candelaria", "Güímar", "El Médano", "Los Abrigos", "Los Cristianos"],
+      "horarios": {
+        "laborable": { "primero": "06:15", "ultimo": "22:00" },
+        "sabado":    { "primero": "07:00", "ultimo": "21:30" },
+        "domingo":   { "primero": "08:00", "ultimo": "21:00" }
+      }
+    },
+    {
+      "id": "L014",
+      "nombre": "Santa Cruz – Aeropuerto TFN",
+      "descripcion": "Conexión directa con el Aeropuerto Tenerife Norte",
+      "frecuencia_punta": 20,
+      "frecuencia_valle": 40,
+      "precio": 2.10,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "La Laguna – Trinidad", "Taco", "Aeropuerto TFN"],
+      "horarios": {
+        "laborable": { "primero": "05:30", "ultimo": "00:30" },
+        "sabado":    { "primero": "05:30", "ultimo": "00:30" },
+        "domingo":   { "primero": "05:30", "ultimo": "00:30" }
+      }
+    },
+    {
+      "id": "L103",
+      "nombre": "Santa Cruz – Puerto de la Cruz",
+      "descripcion": "Ruta por autopista entre los dos principales núcleos urbanos",
+      "frecuencia_punta": 15,
+      "frecuencia_valle": 30,
+      "precio": 3.50,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "La Laguna", "La Victoria", "La Orotava", "Puerto de la Cruz"],
+      "horarios": {
+        "laborable": { "primero": "06:00", "ultimo": "22:30" },
+        "sabado":    { "primero": "07:00", "ultimo": "22:00" },
+        "domingo":   { "primero": "08:00", "ultimo": "21:30" }
+      }
+    },
+    {
+      "id": "L111",
+      "nombre": "Santa Cruz – Icod de los Vinos",
+      "descripcion": "Une la capital con el norte-oeste de la isla",
+      "frecuencia_punta": 60,
+      "frecuencia_valle": 90,
+      "precio": 5.80,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "Puerto de la Cruz", "Los Realejos", "La Guancha", "Icod de los Vinos"],
+      "horarios": {
+        "laborable": { "primero": "06:30", "ultimo": "21:00" },
+        "sabado":    { "primero": "07:30", "ultimo": "20:30" },
+        "domingo":   { "primero": "09:00", "ultimo": "20:00" }
+      }
+    },
+    {
+      "id": "L342",
+      "nombre": "Santa Cruz – Adeje (vía Guía de Isora)",
+      "descripcion": "Ruta por el sur y suroeste hasta Adeje",
+      "frecuencia_punta": 60,
+      "frecuencia_valle": 120,
+      "precio": 6.20,
+      "paradas_principales": ["Santa Cruz – Intercambiador", "Los Cristianos", "Playa de las Américas", "Guía de Isora", "Adeje"],
+      "horarios": {
+        "laborable": { "primero": "07:00", "ultimo": "20:00" },
+        "sabado":    { "primero": "08:00", "ultimo": "19:30" },
+        "domingo":   { "primero": "09:00", "ultimo": "19:00" }
+      }
+    }
+  ],
+  "paradas": [
+    {
+      "id": "4821",
+      "nombre": "Av. de la Constitución",
+      "municipio": "Santa Cruz de Tenerife",
+      "lineas": ["L10", "L25", "L014", "L103", "L111", "L342"]
+    },
+    {
+      "id": "1032",
+      "nombre": "Hospital Universitario",
+      "municipio": "Santa Cruz de Tenerife",
+      "lineas": ["L10", "L103"]
+    },
+    {
+      "id": "2201",
+      "nombre": "La Laguna – Trinidad",
+      "municipio": "San Cristóbal de La Laguna",
+      "lineas": ["L10", "L014", "L103"]
+    }
+  ]
+}
