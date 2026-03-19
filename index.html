@@ -252,7 +252,8 @@ async function llamarOpenAI(datosLinea) {
     contexto = `DATOS REALES DE TITSA.COM PARA LA LÍNEA ${datosLinea.linea}:
 Nombre: ${datosLinea.nombre}
 Contenido con horarios:
-${datosLinea.contenido}
+${datosLinea.contenido || (datosLinea.horarios || []).join('
+')}
 
 INSTRUCCIÓN: Usa SOLO estos datos para responder. NO inventes nada.`;
   } else {
