@@ -32,7 +32,7 @@
     .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
     .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
-    .bot .bubble table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+    .bot .bubble table { width: 100%; border-collapse: collapse; margin: 4px 0 0 0; font-size: 12px; }
     .bot .bubble th { background: var(--verde); color: #fff; padding: 5px 8px; text-align: center; font-weight: 500; }
     .bot .bubble td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--borde); }
     .bot .bubble tr:nth-child(even) td { background: #f9f9f9; }
@@ -230,7 +230,7 @@ async function processMessage(text) {
       if (esNuevaLinea) historial = [];
     } else {
       removeTyping();
-      addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA. Comprueba el numero.');
+      addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA.');
       setLoading(false);
       return;
     }
@@ -239,7 +239,7 @@ async function processMessage(text) {
   historial.push({ role: 'user', content: text });
 
   try {
-    var respuesta = await llamarOpenAI(datosLinea, text);
+    var respuesta = await llamarOpenAI(datosLinea);
     respuesta = limpiarMarkdown(respuesta);
     removeTyping();
     addBotMsg(respuesta);
@@ -260,25 +260,32 @@ function limpiarMarkdown(texto) {
     .replace(/\n/g, '<br>');
 }
 
-async function llamarOpenAI(datosLinea, preguntaUsuario) {
+async function llamarOpenAI(datosLinea) {
   var contexto;
   var esPrimeraVez = historial.length <= 1;
 
   if (datosLinea && !datosLinea.error) {
-    contexto = 'DATOS REALES DE TITSA.COM PARA LA LINEA ' + datosLinea.linea + ':\n' + datosLinea.contenido;
+    contexto = 'DATOS REALES DE TITSA.COM PARA LA LINEA ' + datosLinea.linea + ' (' + datosLinea.nombre + '):\n' + datosLinea.contenido;
   } else {
     contexto = 'El usuario no ha indicado linea. Pidele el numero de linea.';
   }
 
-  var instrucciones = esPrimeraVez
-    ? 'El usuario acaba de mencionar una linea por primera vez. Presentala brevemente: di el nombre, origen y destino en 2-3 lineas. NO des horarios todavia. Termina preguntando que necesita saber.'
-    : 'Responde a la pregunta del usuario usando los datos proporcionados. Si pide horarios, presentalos en formato de tabla HTML con columnas para La Laguna y Puerto de la Cruz. Si pide el recorrido, lista las paradas principales separadas por flechas.';
+  var instrucciones;
+  if (esPrimeraVez) {
+    instrucciones = 'El usuario acaba de mencionar esta linea por primera vez. Presentala brevemente: nombre, origen y destino en 2-3 lineas cortas. NO des horarios todavia. Termina preguntando que necesita saber.';
+  } else {
+    instrucciones = 'Responde a la pregunta del usuario usando UNICAMENTE los datos proporcionados.\n'
+      + 'Si pregunta por horarios: presentalos en una tabla HTML con <table><thead><tr><th>Desde La Laguna</th><th>Desde Puerto de la Cruz</th></tr></thead><tbody>...</tbody></table>. Pon cada hora en su celda correspondiente.\n'
+      + 'Si pregunta como llegar de un sitio a otro: busca en los datos del recorrido de la linea si conecta esos puntos. Si la linea actual los conecta, indicalo claramente con los horarios relevantes. No inventes otras lineas.\n'
+      + 'Si pregunta por el recorrido: lista las paradas principales separadas por flechas (->).\n'
+      + 'Nunca digas que no tienes informacion si los datos estan en el contexto. Lee bien el contenido antes de responder.';
+  }
 
   var sistema = 'Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).\n'
     + 'Responde en espanol, de forma amable y concisa.\n'
-    + 'FORMATO: Usa solo HTML simple: <strong> para negrita, <br> para saltos de linea, <table><tr><th><td> para tablas.\n'
-    + 'PROHIBIDO: No uses asteriscos (*), almohadillas (#), guiones bajos (_) ni ningun otro marcado markdown.\n'
-    + 'NUNCA inventes datos. USA SOLO los datos que te proporciono.\n\n'
+    + 'FORMATO OBLIGATORIO: Usa solo HTML: <strong> para negrita, <br> para saltos de linea, tablas HTML para horarios.\n'
+    + 'PROHIBIDO TOTALMENTE: asteriscos (*), almohadillas (#), guiones bajos (_), corchetes, cualquier markdown.\n'
+    + 'NUNCA inventes datos ni lineas que no esten en los datos proporcionados.\n\n'
     + instrucciones + '\n\n'
     + contexto;
 
@@ -287,7 +294,7 @@ async function llamarOpenAI(datosLinea, preguntaUsuario) {
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 600,
+      max_tokens: 700,
       messages: [{ role: 'system', content: sistema }].concat(historial)
     })
   });
