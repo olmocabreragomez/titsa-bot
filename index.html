@@ -32,7 +32,7 @@
     .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
     .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
-    .bot .bubble table { width: 100%; border-collapse: collapse; margin: 4px 0 0 0; font-size: 12px; }
+    .bot .bubble table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .bot .bubble th { background: var(--verde); color: #fff; padding: 5px 8px; text-align: center; font-weight: 500; }
     .bot .bubble td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--borde); }
     .bot .bubble tr:nth-child(even) td { background: #f9f9f9; }
@@ -91,7 +91,7 @@
   </div>
 
   <div class="input-area">
-    <input class="chat-input" id="input" type="text" placeholder="Ej: linea 103, horarios 014..." />
+    <input class="chat-input" id="input" type="text" placeholder="Ej: como ir al Puerto, horarios 103..." />
     <button class="send-btn" id="send-btn" onclick="handleSend()">
       <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
     </button>
@@ -105,10 +105,190 @@ var lineaActual = null;
 var lineaCache = {};
 var historial = [];
 
+// Mapa completo de todas las lineas de TITSA con sus destinos
+var LINEAS_TITSA = [
+  {num:'10', destinos:['aeropuerto sur','aeropuerto tfs','tfs','reina sofia','santa cruz','aeropuerto del sur']},
+  {num:'20', destinos:['aeropuerto norte','aeropuerto tfn','tfn','los rodeos','santa cruz','laguna']},
+  {num:'30', destinos:['aeropuerto norte','aeropuerto tfn','tfn','puerto de la cruz','puerto cruz']},
+  {num:'40', destinos:['aeropuerto sur','aeropuerto tfs','costa adeje','adeje','cristianos','los cristianos']},
+  {num:'11', destinos:['el sauzal','sauzal','laguna','tacoronte','calvario']},
+  {num:'12', destinos:['el sauzal','sauzal','laguna','tacoronte']},
+  {num:'14', destinos:['santa cruz','laguna','la laguna','la cuesta']},
+  {num:'15', destinos:['santa cruz','laguna','la laguna','directa']},
+  {num:'18', destinos:['laguna','la laguna','anaza','centros comerciales']},
+  {num:'21', destinos:['tacoronte','santa catalina','mesa del mar']},
+  {num:'23', destinos:['tacoronte','el pris','calvario']},
+  {num:'26', destinos:['santa cruz','laguna','la laguna','barrio la salud','finca espana']},
+  {num:'32', destinos:['guimar','las eras','la sombrera']},
+  {num:'33', destinos:['guimar','fasnia','la sombrera']},
+  {num:'34', destinos:['el tablado','granadilla','fasnia','arico']},
+  {num:'35', destinos:['guimar','granadilla','fasnia','arico']},
+  {num:'36', destinos:['guimar','granadilla','los roques']},
+  {num:'39', destinos:['guimar','granadilla','el tablado']},
+  {num:'50', destinos:['laguna','la laguna','tegueste','bajamar','punta del hidalgo','hidalgo']},
+  {num:'51', destinos:['laguna','la laguna','tejina','tacoronte','circular']},
+  {num:'52', destinos:['laguna','la laguna','tegueste','el socorro']},
+  {num:'54', destinos:['laguna','la laguna','el sauzal','sauzal','altos']},
+  {num:'55', destinos:['laguna','la laguna','barranco grande','geneto']},
+  {num:'56', destinos:['laguna','la laguna','barranco grande','llano del moro']},
+  {num:'57', destinos:['laguna','la laguna','tacoronte','tejina','circular']},
+  {num:'76', destinos:['laguna','la laguna','cruz del carmen','afur','anaga']},
+  {num:'77', destinos:['laguna','la laguna','el bailadero','las mercedes','anaga']},
+  {num:'100', destinos:['santa cruz','puerto de la cruz','puerto cruz','directa']},
+  {num:'101', destinos:['laguna','la laguna','la orotava','orotava']},
+  {num:'102', destinos:['santa cruz','puerto de la cruz','puerto cruz','las arenas']},
+  {num:'103', destinos:['laguna','la laguna','puerto de la cruz','puerto cruz','botanico']},
+  {num:'104', destinos:['santa cruz','puerto de la cruz','puerto cruz','tacoronte','nocturna']},
+  {num:'105', destinos:['santa cruz','punta del hidalgo','hidalgo','laguna','la laguna']},
+  {num:'106', destinos:['santa cruz','icod de los vinos','icod','directa']},
+  {num:'108', destinos:['icod','icod de los vinos','santa cruz']},
+  {num:'110', destinos:['santa cruz','costa adeje','adeje']},
+  {num:'111', destinos:['santa cruz','costa adeje','adeje','los cristianos','cristianos']},
+  {num:'112', destinos:['santa cruz','los cristianos','cristianos']},
+  {num:'114', destinos:['santa cruz','san isidro']},
+  {num:'120', destinos:['santa cruz','candelaria','puertito de guimar','guimar']},
+  {num:'121', destinos:['guimar','arafo','poligono de guimar','candelaria']},
+  {num:'122', destinos:['santa cruz','las caletillas','candelaria']},
+  {num:'126', destinos:['candelaria','campus guajara','hospital la candelaria','santa cruz']},
+  {num:'127', destinos:['guimar','candelaria']},
+  {num:'128', destinos:['santa cruz','arafo','guimar']},
+  {num:'138', destinos:['santa cruz','radazul','tabaiba','radazul bajo']},
+  {num:'139', destinos:['santa cruz','radazul bajo','tabaiba','radazul']},
+  {num:'142', destinos:['santa cruz','anaza','acoran','barranco hondo']},
+  {num:'201', destinos:['laguna','la laguna','verdellada','intercambiador']},
+  {num:'203', destinos:['laguna','la laguna','san lazaro','tornero','gavias','san benito','trinidad']},
+  {num:'204', destinos:['laguna','la laguna','la rua','lomo largo','el rayo','las canas','trinidad']},
+  {num:'206', destinos:['laguna','la laguna','la verdellada','plaza del cristo','rancho grande','san benito']},
+  {num:'217', destinos:['laguna','la laguna','andenes','cardonal','hospital universitario']},
+  {num:'219', destinos:['laguna','la laguna','el cardonal','taco','san matias']},
+  {num:'224', destinos:['laguna','la laguna','valle guerra','tejina']},
+  {num:'228', destinos:['santa cruz','los campitos','la cuesta']},
+  {num:'231', destinos:['santa cruz','la gallega','directo']},
+  {num:'232', destinos:['santa cruz','el cardonal','la gallega']},
+  {num:'233', destinos:['santa cruz','el cardonal','finca espana']},
+  {num:'238', destinos:['santa cruz','san matias','chamberi']},
+  {num:'253', destinos:['laguna','la laguna','guamasa','garimba']},
+  {num:'260', destinos:['laguna','la laguna','santa cruz','los baldios','llano del moro']},
+  {num:'270', destinos:['laguna','la laguna','las mercedes','anaga']},
+  {num:'271', destinos:['laguna','la laguna','el camino','cruz de alamos','las mercedes']},
+  {num:'273', destinos:['laguna','la laguna','cruz del carmen','las mercedes']},
+  {num:'274', destinos:['laguna','la laguna','el batan','las mercedes']},
+  {num:'275', destinos:['laguna','la laguna','las carboneras','taborno','anaga']},
+  {num:'325', destinos:['puerto de la cruz','puerto cruz','icod','los gigantes','gigantes']},
+  {num:'330', destinos:['los realejos','realejos','san vicente','las llanadas']},
+  {num:'341', destinos:['parador','teleferico','el portillo','las canadas','teide']},
+  {num:'342', destinos:['costa adeje','adeje','cristianos','las canadas','el portillo','teide']},
+  {num:'343', destinos:['puerto de la cruz','puerto cruz','costa adeje','adeje','aeropuerto norte','aeropuerto sur']},
+  {num:'345', destinos:['puerto de la cruz','puerto cruz','orotava','la orotava','aguamansa']},
+  {num:'346', destinos:['orotava','la orotava','aguamansa','el velo','la caldera']},
+  {num:'347', destinos:['la orotava','orotava','palo blanco','realejo alto','realejos']},
+  {num:'348', destinos:['puerto de la cruz','puerto cruz','el portillo','las canadas','teide']},
+  {num:'351', destinos:['puerto de la cruz','puerto cruz','botanico','la orotava','orotava']},
+  {num:'352', destinos:['puerto de la cruz','puerto cruz','orotava','la orotava','realejos','circular']},
+  {num:'353', destinos:['puerto de la cruz','puerto cruz','realejos','orotava','circular']},
+  {num:'354', destinos:['icod de los vinos','icod','los realejos','realejos']},
+  {num:'355', destinos:['buenavista','masca','santiago del teide']},
+  {num:'357', destinos:['icod de los vinos','icod','hospital del norte','circular']},
+  {num:'358', destinos:['icod de los vinos','icod','santa barbara']},
+  {num:'360', destinos:['icod de los vinos','icod','puerto de erjos','erjos']},
+  {num:'362', destinos:['icod de los vinos','icod','playa san marcos']},
+  {num:'363', destinos:['puerto de la cruz','puerto cruz','buenavista','icod de los vinos','icod']},
+  {num:'364', destinos:['icod de los vinos','icod','hospital del norte','la guancha','san juan de la rambla']},
+  {num:'365', destinos:['buenavista','masca']},
+  {num:'366', destinos:['buenavista','el palmar','las portelas']},
+  {num:'369', destinos:['buenavista','punta de teno','teno']},
+  {num:'372', destinos:['las dehesas','san antonio','la piedad']},
+  {num:'373', destinos:['las dehesas','la florida','camino polo','la piedad']},
+  {num:'376', destinos:['la orotava','orotava','las dehesas','el rincon']},
+  {num:'380', destinos:['la corujera','tigaiga','la orotava','orotava']},
+  {num:'381', destinos:['puerto de la cruz','puerto cruz','punta brava','loro parque','la longuera']},
+  {num:'382', destinos:['puerto de la cruz','puerto cruz','plaza del charco','mercado','la vera']},
+  {num:'383', destinos:['puerto de la cruz','puerto cruz','las arenas','la vera','circular']},
+  {num:'385', destinos:['puerto de la cruz','puerto cruz','durazno','botanico','taoro']},
+  {num:'390', destinos:['puerto de la cruz','puerto cruz','arenas','la vera','la montana','realejos']},
+  {num:'392', destinos:['icod de los vinos','icod','puerto de erjos','el tanque']},
+  {num:'408', destinos:['granadilla','san isidro','el medano','medano']},
+  {num:'409', destinos:['san miguel','granadilla','san isidro','el medano','medano']},
+  {num:'410', destinos:['granadilla','san isidro','el medano','medano','los abrigos']},
+  {num:'411', destinos:['granadilla','san isidro','el medano','medano','montana pelada']},
+  {num:'412', destinos:['granadilla','san isidro','los abrigos']},
+  {num:'415', destinos:['el fraile','aeropuerto sur','aeropuerto tfs','san isidro','las galletas']},
+  {num:'416', destinos:['granadilla','san miguel','valle san lorenzo','los cristianos','cristianos']},
+  {num:'417', destinos:['costa adeje','adeje','el cerco','guia de isora','isora']},
+  {num:'418', destinos:['costa adeje','adeje','valle san lorenzo']},
+  {num:'419', destinos:['granadilla','san miguel','la escalona','vilaflor']},
+  {num:'421', destinos:['valle san lorenzo','camella','cabo blanco','las galletas']},
+  {num:'424', destinos:['los cristianos','cristianos','costa adeje','adeje','torviscas','el duque']},
+  {num:'430', destinos:['granadilla','arico','poris','costa arico','las maretas']},
+  {num:'447', destinos:['los cristianos','cristianos','costa adeje','adeje','el cerco']},
+  {num:'450', destinos:['costa adeje','adeje','los cristianos','cristianos','san isidro']},
+  {num:'452', destinos:['san isidro','costa adeje','adeje','la caleta']},
+  {num:'460', destinos:['icod de los vinos','icod','guia de isora','isora','costa adeje','adeje']},
+  {num:'461', destinos:['arguayo','los gigantes','gigantes','acantilado']},
+  {num:'462', destinos:['guia de isora','isora','valle santiago','los gigantes','gigantes']},
+  {num:'463', destinos:['chimiche','los blanquitos','granadilla']},
+  {num:'467', destinos:['costa del silencio','los cristianos','cristianos','costa adeje','adeje','caleta']},
+  {num:'468', destinos:['guaza','el fraile','costa del silencio','guargacho','palm mar']},
+  {num:'470', destinos:['el medano','medano','golf del sur','las galletas','los cristianos','cristianos']},
+  {num:'471', destinos:['los cristianos','cristianos','costa adeje','adeje','playa paraiso']},
+  {num:'473', destinos:['los cristianos','cristianos','costa adeje','adeje','callao salvaje','los gigantes','gigantes']},
+  {num:'475', destinos:['granadilla','cruz de tea']},
+  {num:'477', destinos:['costa adeje','adeje','los gigantes','gigantes','directo']},
+  {num:'480', destinos:['arona','la sabinita','la camella','chayofa','los cristianos','cristianos']},
+  {num:'482', destinos:['vilaflor','la escalona','arona','la camella','cabo blanco','los cristianos','cristianos']},
+  {num:'483', destinos:['los cristianos','cristianos','guaza','chafiras','costa san miguel','los abrigos']},
+  {num:'484', destinos:['granadilla','san miguel','aldea blanca','las chafiras']},
+  {num:'486', destinos:['granadilla','san miguel','aldea blanca','las chafiras','el fraile']},
+  {num:'490', destinos:['guia de isora','isora','tejina','vera de erques']},
+  {num:'492', destinos:['chiguergue','guia de isora','isora']},
+  {num:'493', destinos:['guia de isora','isora','alcala']},
+  {num:'494', destinos:['guia de isora','isora','alcala']},
+  {num:'605', destinos:['orotava','la orotava','campus guajara','ull','universidad','hospitales','hospital']},
+  {num:'606', destinos:['icod de los vinos','icod','campus guajara','ull','universidad']},
+  {num:'608', destinos:['los realejos','realejos','campus guajara','ull','universidad']},
+  {num:'611', destinos:['costa adeje','adeje','universidad','ull','hospital']},
+  {num:'711', destinos:['santa cruz','aeropuerto sur','aeropuerto tfs','los cristianos','cristianos','costa adeje','adeje','nocturna']},
+  {num:'901', destinos:['santa cruz','intercambiador','barrio la salud','miraflores']},
+  {num:'902', destinos:['santa cruz','intercambiador','plaza los patos','barrio nuevo']},
+  {num:'903', destinos:['santa cruz','muelle norte','ramblas','moraditas']},
+  {num:'904', destinos:['santa cruz','plaza weyler','barrio la salud','cuesta piedra']},
+  {num:'905', destinos:['santa cruz','muelle norte','ofra','juan xxiii']},
+  {num:'906', destinos:['santa cruz','intercambiador','barrio la salud']},
+  {num:'908', destinos:['santa cruz','intercambiador','barrio de ofra','juan xxiii']},
+  {num:'909', destinos:['santa cruz','intercambiador','barrio de la alegria']},
+  {num:'910', destinos:['santa cruz','intercambiador','san andres','playa de las teresitas','teresitas']},
+  {num:'911', destinos:['santa cruz','muelle norte','ramblas','barrio la salud','juan xxiii']},
+  {num:'912', destinos:['santa cruz','intercambiador','ifara','los campitos']},
+  {num:'914', destinos:['santa cruz','intercambiador','plaza weyler','plaza de espana']},
+  {num:'916', destinos:['santa cruz','intercambiador','maria jimenez','los valles']},
+  {num:'917', destinos:['santa cruz','intercambiador','valleseco','la quebrada']},
+  {num:'919', destinos:['santa cruz','intercambiador','barrio la salud','cuesta piedra','barranco de santos']},
+  {num:'920', destinos:['santa cruz','intercambiador','plaza de espana','la marina','ramblas']},
+  {num:'921', destinos:['santa cruz','intercambiador','avenida reyes catolicos']},
+  {num:'923', destinos:['santa cruz','muelle norte','ramblas','moraditas']},
+  {num:'933', destinos:['santa cruz','taco','barranco grande','el tablero']},
+  {num:'934', destinos:['santa cruz','intercambiador','taco','santa maria del mar','anaza','circular']},
+  {num:'935', destinos:['santa cruz','intercambiador','anaza','alisios','santa maria del mar']},
+  {num:'936', destinos:['santa cruz','intercambiador','anaza','santa maria del mar','taco','circular']},
+  {num:'937', destinos:['santa cruz','intercambiador','taco','tincer','el sobradillo']},
+  {num:'939', destinos:['taco','el sobradillo','llano del moro']},
+  {num:'940', destinos:['santa cruz','intercambiador','acoran','costanera']},
+  {num:'941', destinos:['santa cruz','intercambiador','anaza','acoran','boca cangrejo']},
+  {num:'944', destinos:['el tablero','la gallega','tincer','taco']},
+  {num:'945', destinos:['santa cruz','intercambiador','san andres','igueste de san andres']},
+  {num:'946', destinos:['santa cruz','intercambiador','san andres','taganana','almaciga','anaga']},
+  {num:'947', destinos:['santa cruz','intercambiador','san andres','bailadero','chamorga','anaga']},
+  {num:'970', destinos:['santa cruz','intercambiador','san andres','nocturna']},
+  {num:'971', destinos:['santa cruz','intercambiador','barrio la salud','ofra','nocturna']},
+  {num:'972', destinos:['santa cruz','intercambiador','barrio la salud','cuesta piedra','nocturna']},
+  {num:'974', destinos:['santa cruz','intercambiador','taco','anaza','santa maria del mar','nocturna']},
+  {num:'975', destinos:['santa cruz','intercambiador','tincer','la gallega','nocturna']}
+];
+
 if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
 document.getElementById('input').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSend(); });
 
-addBotMsg('Hola! Soy el asistente de TITSA.<br>Dime el numero de linea que quieres consultar.');
+addBotMsg('Hola! Soy el asistente de TITSA.<br>Puedes preguntarme como llegar a cualquier sitio o consultar los horarios de una linea.');
 
 function saveKey() {
   var val = document.getElementById('apikey-field').value.trim();
@@ -150,10 +330,7 @@ function showTyping() {
   chat.scrollTop = chat.scrollHeight;
 }
 
-function removeTyping() {
-  var t = document.getElementById('typing');
-  if (t) t.remove();
-}
+function removeTyping() { var t = document.getElementById('typing'); if (t) t.remove(); }
 
 function setLoading(on) {
   document.getElementById('input').disabled = on;
@@ -172,7 +349,7 @@ function cambiarLinea() {
   historial = [];
   document.getElementById('linea-banner').style.display = 'none';
   document.getElementById('chips').style.display = 'none';
-  addBotMsg('De acuerdo, que linea quieres consultar?');
+  addBotMsg('De acuerdo, adonde quieres ir o que linea consultas?');
 }
 
 async function consultarLinea(num) {
@@ -183,12 +360,15 @@ async function consultarLinea(num) {
     var data = await res.json();
     if (!data.error) lineaCache[key] = data;
     return data;
-  } catch(e) {
-    return { error: 'Sin conexion' };
-  }
+  } catch(e) { return { error: 'Sin conexion' }; }
+}
+
+function esConsultaDeRuta(texto) {
+  return /llegar|como ir|como voy|que guagua|qu[ée] l[ií]nea|que bus|desde.*hasta|ir a|voy a|coger para|para ir|para llegar|como puedo ir|como llego/i.test(texto);
 }
 
 function extraerNumeroLinea(texto) {
+  if (esConsultaDeRuta(texto)) return null;
   var m = texto.match(/l[ií]nea\s+(\d{1,3})/i);
   if (m) return m[1];
   m = texto.match(/^(\d{1,3})$/);
@@ -196,6 +376,21 @@ function extraerNumeroLinea(texto) {
   m = texto.match(/\b(\d{2,3})\b/);
   if (m) return m[1];
   return null;
+}
+
+function buscarLineasPorTexto(texto) {
+  var t = texto.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  var resultados = [];
+  for (var i = 0; i < LINEAS_TITSA.length; i++) {
+    for (var j = 0; j < LINEAS_TITSA[i].destinos.length; j++) {
+      if (t.includes(LINEAS_TITSA[i].destinos[j])) {
+        resultados.push(LINEAS_TITSA[i].num);
+        break;
+      }
+    }
+  }
+  return resultados;
 }
 
 async function handleSend() {
@@ -218,28 +413,44 @@ async function processMessage(text) {
   setLoading(true);
   showTyping();
 
-  var datosLinea = lineaActual;
+  var datosLineas = [];
   var numDetectado = extraerNumeroLinea(text);
 
   if (numDetectado) {
     var datos = await consultarLinea(numDetectado);
     if (!datos.error) {
-      var esNuevaLinea = !lineaActual || lineaActual.linea !== datos.linea;
-      datosLinea = datos;
+      var esNueva = !lineaActual || lineaActual.linea !== datos.linea;
+      lineaActual = datos;
       setLinea(datos);
-      if (esNuevaLinea) historial = [];
+      if (esNueva) historial = [];
+      datosLineas = [datos];
     } else {
       removeTyping();
       addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA.');
       setLoading(false);
       return;
     }
+  } else if (esConsultaDeRuta(text)) {
+    var lineasEncontradas = buscarLineasPorTexto(text);
+    if (lineasEncontradas.length > 0) {
+      for (var i = 0; i < Math.min(2, lineasEncontradas.length); i++) {
+        var d = await consultarLinea(lineasEncontradas[i]);
+        if (!d.error) {
+          datosLineas.push(d);
+          if (!lineaActual) { lineaActual = d; setLinea(d); }
+        }
+      }
+    } else if (lineaActual) {
+      datosLineas = [lineaActual];
+    }
+  } else if (lineaActual) {
+    datosLineas = [lineaActual];
   }
 
   historial.push({ role: 'user', content: text });
 
   try {
-    var respuesta = await llamarOpenAI(datosLinea);
+    var respuesta = await llamarOpenAI(datosLineas, text);
     respuesta = limpiarMarkdown(respuesta);
     removeTyping();
     addBotMsg(respuesta);
@@ -260,34 +471,36 @@ function limpiarMarkdown(texto) {
     .replace(/\n/g, '<br>');
 }
 
-async function llamarOpenAI(datosLinea) {
-  var contexto;
+async function llamarOpenAI(datosLineas, pregunta) {
   var esPrimeraVez = historial.length <= 1;
+  var esRuta = esConsultaDeRuta(pregunta);
 
-  if (datosLinea && !datosLinea.error) {
-    contexto = 'DATOS REALES DE TITSA.COM PARA LA LINEA ' + datosLinea.linea + ' (' + datosLinea.nombre + '):\n' + datosLinea.contenido;
-  } else {
-    contexto = 'El usuario no ha indicado linea. Pidele el numero de linea.';
+  var contexto = '';
+  if (datosLineas.length > 0) {
+    for (var i = 0; i < datosLineas.length; i++) {
+      contexto += 'LINEA ' + datosLineas[i].linea + ' (' + datosLineas[i].nombre + '):\n' + datosLineas[i].contenido + '\n\n---\n\n';
+    }
   }
 
   var instrucciones;
-  if (esPrimeraVez) {
-    instrucciones = 'El usuario acaba de mencionar esta linea por primera vez. Presentala brevemente: nombre, origen y destino en 2-3 lineas cortas. NO des horarios todavia. Termina preguntando que necesita saber.';
+  if (esRuta) {
+    instrucciones = 'El usuario pregunta como llegar o que guagua coger. '
+      + 'Con los datos que tienes, identifica que linea conecta los puntos mencionados. '
+      + 'Responde directamente: di el numero de linea, el recorrido y algunos horarios clave en tabla HTML. '
+      + 'Si no tienes datos suficientes de ninguna linea, dilo claramente.';
+  } else if (esPrimeraVez && datosLineas.length > 0) {
+    instrucciones = 'Primera consulta de esta linea. Presentala en 2 lineas cortas: nombre y recorrido. Pregunta que necesita saber.';
   } else {
-    instrucciones = 'Responde a la pregunta del usuario usando UNICAMENTE los datos proporcionados.\n'
-      + 'Si pregunta por horarios: presentalos en una tabla HTML con <table><thead><tr><th>Desde La Laguna</th><th>Desde Puerto de la Cruz</th></tr></thead><tbody>...</tbody></table>. Pon cada hora en su celda correspondiente.\n'
-      + 'Si pregunta como llegar de un sitio a otro: busca en los datos del recorrido de la linea si conecta esos puntos. Si la linea actual los conecta, indicalo claramente con los horarios relevantes. No inventes otras lineas.\n'
-      + 'Si pregunta por el recorrido: lista las paradas principales separadas por flechas (->).\n'
-      + 'Nunca digas que no tienes informacion si los datos estan en el contexto. Lee bien el contenido antes de responder.';
+    instrucciones = 'Responde con los datos. Si pide horarios: tabla HTML directamente sin texto previo. Si pide recorrido: paradas con ->.';
   }
 
-  var sistema = 'Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).\n'
-    + 'Responde en espanol, de forma amable y concisa.\n'
-    + 'FORMATO OBLIGATORIO: Usa solo HTML: <strong> para negrita, <br> para saltos de linea, tablas HTML para horarios.\n'
-    + 'PROHIBIDO TOTALMENTE: asteriscos (*), almohadillas (#), guiones bajos (_), corchetes, cualquier markdown.\n'
-    + 'NUNCA inventes datos ni lineas que no esten en los datos proporcionados.\n\n'
+  var sistema = 'Eres el asistente virtual de TITSA Tenerife. '
+    + 'Responde en espanol, amable y conciso. '
+    + 'USA SOLO HTML: <strong>, <br>, <table><thead><tr><th><tbody><td>. '
+    + 'PROHIBIDO: asteriscos, almohadillas, markdown. '
+    + 'NUNCA inventes datos.\n\n'
     + instrucciones + '\n\n'
-    + contexto;
+    + (contexto || 'No hay datos de lineas. Pide al usuario que especifique destino o linea.');
 
   var res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -299,10 +512,7 @@ async function llamarOpenAI(datosLinea) {
     })
   });
 
-  if (!res.ok) {
-    var e = await res.json();
-    throw new Error(e.error ? e.error.message : res.statusText);
-  }
+  if (!res.ok) { var e = await res.json(); throw new Error(e.error ? e.error.message : res.statusText); }
   var data = await res.json();
   return data.choices[0].message.content;
 }
