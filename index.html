@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TITSA – Asistente</title>
+  <title>TITSA Asistente</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,13 +25,17 @@
     .linea-banner { background: var(--amarillo); padding: 9px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .linea-nombre { font-size: 12px; font-weight: 500; color: var(--amarillo-texto); }
     .chat { flex: 1; overflow-y: auto; background: var(--fondo); padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 90%; animation: fadeUp 0.2s ease; }
+    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 92%; animation: fadeUp 0.2s ease; }
     @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
     .msg.bot { align-self: flex-start; }
     .msg.user { align-self: flex-end; }
-    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
+    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
     .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
+    .bot .bubble table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+    .bot .bubble th { background: var(--verde); color: #fff; padding: 5px 8px; text-align: center; font-weight: 500; }
+    .bot .bubble td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--borde); }
+    .bot .bubble tr:nth-child(even) td { background: #f9f9f9; }
     .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 4px; background: var(--fondo); flex-shrink: 0; }
     .chip { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--borde); background: var(--blanco); color: var(--texto); cursor: pointer; transition: all 0.15s; }
     .chip:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
@@ -62,13 +66,13 @@
     </div>
     <div class="header-info">
       <h1>TITSA Asistente</h1>
-      <p>Información de líneas y horarios</p>
+      <p>Informacion de lineas y horarios</p>
     </div>
-    <div class="status"><div class="status-dot"></div><span>En línea</span></div>
+    <div class="status"><div class="status-dot"></div><span>En linea</span></div>
   </div>
 
   <div id="config-panel">
-    <label>🔑 API Key:</label>
+    <label>API Key:</label>
     <input id="apikey-field" type="password" placeholder="sk-..." />
     <button id="save-key-btn" onclick="saveKey()">Guardar</button>
   </div>
@@ -80,13 +84,14 @@
   <div class="chat" id="chat"></div>
 
   <div class="chips" id="chips" style="display:none">
-    <button class="chip" onclick="sendChip('Horarios completos')">Horarios</button>
-    <button class="chip" onclick="sendChip('Recorrido completo')">Recorrido</button>
-    <button class="chip" onclick="cambiarLinea()">Cambiar línea</button>
+    <button class="chip" onclick="sendChip('Horarios de laborables')">Horarios laborables</button>
+    <button class="chip" onclick="sendChip('Horarios de fin de semana')">Fin de semana</button>
+    <button class="chip" onclick="sendChip('Recorrido y paradas')">Recorrido</button>
+    <button class="chip" onclick="cambiarLinea()">Cambiar linea</button>
   </div>
 
   <div class="input-area">
-    <input class="chat-input" id="input" type="text" placeholder="Ej: línea 103, horarios 014…" />
+    <input class="chat-input" id="input" type="text" placeholder="Ej: linea 103, horarios 014..." />
     <button class="send-btn" id="send-btn" onclick="handleSend()">
       <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
     </button>
@@ -94,16 +99,16 @@
 </div>
 
 <script>
-const PROXY = 'https://titsa-proxy-p1z7.vercel.app';
-let OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
-let lineaActual = null;
-let lineaCache = {};
-let historial = [];
+var PROXY = 'https://titsa-proxy-p1z7.vercel.app';
+var OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
+var lineaActual = null;
+var lineaCache = {};
+var historial = [];
 
 if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
 document.getElementById('input').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSend(); });
 
-addBotMsg('Hola! Soy el asistente de TITSA. Dime el numero de linea que quieres consultar.');
+addBotMsg('Hola! Soy el asistente de TITSA.<br>Dime el numero de linea que quieres consultar.');
 
 function saveKey() {
   var val = document.getElementById('apikey-field').value.trim();
@@ -188,7 +193,7 @@ function extraerNumeroLinea(texto) {
   if (m) return m[1];
   m = texto.match(/^(\d{1,3})$/);
   if (m) return m[1];
-  m = texto.match(/\b(\d{1,3})\b/);
+  m = texto.match(/\b(\d{2,3})\b/);
   if (m) return m[1];
   return null;
 }
@@ -219,12 +224,13 @@ async function processMessage(text) {
   if (numDetectado) {
     var datos = await consultarLinea(numDetectado);
     if (!datos.error) {
+      var esNuevaLinea = !lineaActual || lineaActual.linea !== datos.linea;
       datosLinea = datos;
       setLinea(datos);
-      historial = [];
+      if (esNuevaLinea) historial = [];
     } else {
       removeTyping();
-      addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA.');
+      addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA. Comprueba el numero.');
       setLoading(false);
       return;
     }
@@ -233,7 +239,8 @@ async function processMessage(text) {
   historial.push({ role: 'user', content: text });
 
   try {
-    var respuesta = await llamarOpenAI(datosLinea);
+    var respuesta = await llamarOpenAI(datosLinea, text);
+    respuesta = limpiarMarkdown(respuesta);
     removeTyping();
     addBotMsg(respuesta);
     historial.push({ role: 'assistant', content: respuesta });
@@ -245,28 +252,50 @@ async function processMessage(text) {
   }
 }
 
-async function llamarOpenAI(datosLinea) {
+function limpiarMarkdown(texto) {
+  return texto
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '$1')
+    .replace(/#{1,6}\s*/g, '')
+    .replace(/\n/g, '<br>');
+}
+
+async function llamarOpenAI(datosLinea, preguntaUsuario) {
   var contexto;
+  var esPrimeraVez = historial.length <= 1;
+
   if (datosLinea && !datosLinea.error) {
-    var info = datosLinea.contenido || '';
-    contexto = 'DATOS REALES DE TITSA.COM PARA LA LINEA ' + datosLinea.linea + ':\nNombre: ' + datosLinea.nombre + '\n' + info + '\n\nUSA SOLO ESTOS DATOS. NO INVENTES NADA.';
+    contexto = 'DATOS REALES DE TITSA.COM PARA LA LINEA ' + datosLinea.linea + ':\n' + datosLinea.contenido;
   } else {
     contexto = 'El usuario no ha indicado linea. Pidele el numero de linea.';
   }
 
-  var sistema = 'Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife). Responde en espanol, de forma amable y clara. Usa strong y br para formatear. NUNCA inventes datos.\n\n' + contexto;
+  var instrucciones = esPrimeraVez
+    ? 'El usuario acaba de mencionar una linea por primera vez. Presentala brevemente: di el nombre, origen y destino en 2-3 lineas. NO des horarios todavia. Termina preguntando que necesita saber.'
+    : 'Responde a la pregunta del usuario usando los datos proporcionados. Si pide horarios, presentalos en formato de tabla HTML con columnas para La Laguna y Puerto de la Cruz. Si pide el recorrido, lista las paradas principales separadas por flechas.';
+
+  var sistema = 'Eres el asistente virtual de TITSA (Transportes Interurbanos de Tenerife).\n'
+    + 'Responde en espanol, de forma amable y concisa.\n'
+    + 'FORMATO: Usa solo HTML simple: <strong> para negrita, <br> para saltos de linea, <table><tr><th><td> para tablas.\n'
+    + 'PROHIBIDO: No uses asteriscos (*), almohadillas (#), guiones bajos (_) ni ningun otro marcado markdown.\n'
+    + 'NUNCA inventes datos. USA SOLO los datos que te proporciono.\n\n'
+    + instrucciones + '\n\n'
+    + contexto;
 
   var res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      max_tokens: 500,
+      max_tokens: 600,
       messages: [{ role: 'system', content: sistema }].concat(historial)
     })
   });
 
-  if (!res.ok) { var e = await res.json(); throw new Error(e.error ? e.error.message : res.statusText); }
+  if (!res.ok) {
+    var e = await res.json();
+    throw new Error(e.error ? e.error.message : res.statusText);
+  }
   var data = await res.json();
   return data.choices[0].message.content;
 }
