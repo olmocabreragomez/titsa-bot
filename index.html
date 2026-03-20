@@ -388,31 +388,39 @@ function buscarLineasPorRuta(texto) {
 
 // Convierte el texto de la IA en HTML seguro — NO toca etiquetas HTML existentes
 function procesarRespuesta(texto) {
-  // Si ya contiene HTML de tabla, no tocar los saltos de linea dentro
-  if (texto.indexOf('<table') !== -1) {
-    // Solo convertir saltos fuera de las etiquetas HTML
-    var partes = texto.split(/(<[^>]+>)/);
-    var resultado = '';
-    var dentroTag = false;
-    for (var i = 0; i < partes.length; i++) {
-      if (partes[i].match(/^<[^>]+>$/)) {
-        resultado += partes[i];
-      } else {
-        resultado += partes[i]
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*(.*?)\*/g, '$1')
-          .replace(/#{1,6}\s*/g, '')
-          .replace(/\n/g, '<br>');
-      }
-    }
-    return resultado;
-  }
-  // Sin tabla: conversion normal
-  return texto
+  // Eliminar saltos de linea justo antes y despues de etiquetas de tabla
+  texto = texto.replace(/\n+(<table)/gi, '$1');
+  texto = texto.replace(/(\/table>)\n+/gi, '$1');
+  texto = texto.replace(/(<\/tr>)\n+/gi, '$1');
+  texto = texto.replace(/\n+(<tr)/gi, '$1');
+  texto = texto.replace(/(<\/th>)\n+/gi, '$1');
+  texto = texto.replace(/(<\/td>)\n+/gi, '$1');
+
+  // Eliminar markdown
+  texto = texto
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '$1')
-    .replace(/#{1,6}\s*/g, '')
-    .replace(/\n/g, '<br>');
+    .replace(/#{1,6}\s*/g, '');
+
+  // Convertir saltos de linea que esten FUERA de etiquetas HTML en <br>
+  // Separar por bloques HTML vs texto plano
+  var resultado = '';
+  var partes = texto.split(/(<(?:table|thead|tbody|tr|th|td|\/table|\/thead|\/tbody|\/tr|\/th|\/td)[^>]*>)/gi);
+  var dentroTabla = false;
+  for (var i = 0; i < partes.length; i++) {
+    if (partes[i].match(/^<(table|thead|tbody|tr|th|td)[^>]*>$/i)) {
+      dentroTabla = true;
+      resultado += partes[i];
+    } else if (partes[i].match(/^<\/(table|thead|tbody|tr|th|td)>$/i)) {
+      dentroTabla = false;
+      resultado += partes[i];
+    } else if (dentroTabla) {
+      resultado += partes[i];
+    } else {
+      resultado += partes[i].replace(/\n/g, '<br>');
+    }
+  }
+  return resultado;
 }
 
 async function handleSend() {
