@@ -235,38 +235,53 @@ async function fetchRuta(origen, destino) {
 
 function formatLinea(datos, pregunta) {
   var p = (pregunta || '').toLowerCase();
+  var sentidos = datos.sentidos || [];
   var html = '<strong>Línea ' + datos.num + ' — ' + datos.nombre + '</strong><br><br>';
 
-  // Paradas
-  if (p.includes('parada') || p.includes('recorrido') || p.includes('para')) {
-    html += '<strong>Recorrido (' + datos.recorrido.length + ' paradas):</strong><br>';
-    datos.recorrido.forEach(function(p, i) {
-      html += '<div class="parada-item"><span class="parada-id">' + p.id + '</span> ' + (i+1) + '. ' + p.nombre + '</div>';
+  // Paradas del recorrido
+  if (p.includes('parada') || p.includes('recorrido')) {
+    sentidos.forEach(function(s, si) {
+      html += '<strong>Sentido ' + (si+1) + ': → ' + s.destino + '</strong><br>';
+      html += '<strong>(' + s.recorrido.length + ' paradas desde ' + s.origen + ')</strong><br>';
+      s.recorrido.forEach(function(par, i) {
+        html += '<div class="parada-item"><span class="parada-id">' + par.id + '</span> ' + (i+1) + '. ' + par.nombre + '</div>';
+      });
+      html += '<br>';
     });
     return html;
   }
 
-  // Horarios
+  // Horarios: tabla con columna por sentido
   var tipo = 'laborable';
   if (p.includes('sábado') || p.includes('sabado')) tipo = 'sabado';
   else if (p.includes('domingo') || p.includes('festivo')) tipo = 'domingo';
 
-  var horas = datos.horarios[tipo] || [];
-  if (!horas.length && tipo !== 'laborable') horas = datos.horarios.laborable || [];
+  if (!sentidos.length) return html + 'No hay datos de horarios.';
 
-  var origen = datos.recorrido.length ? datos.recorrido[0].nombre : 'Origen';
-  var destino_rec = datos.recorrido.length ? datos.recorrido[datos.recorrido.length-1].nombre : 'Destino';
-  html += '<strong>Horarios ' + tipo + ' (' + horas.length + ' salidas desde ' + origen + '):</strong>';
-  html += '<table><tr><th colspan="4">Salidas desde ' + origen + '</th></tr>';
-  for (var i = 0; i < horas.length; i += 4) {
+  // Cabecera con nombre de origen de cada sentido
+  html += '<table><tr>';
+  sentidos.forEach(function(s) {
+    var horas = s.horarios[tipo] || [];
+    html += '<th>' + s.origen + '<br><small>(' + horas.length + ' salidas)</small></th>';
+  });
+  html += '</tr>';
+
+  // Filas de horas
+  var maxFilas = 0;
+  var columnas = sentidos.map(function(s) {
+    var h = s.horarios[tipo] || [];
+    if (h.length > maxFilas) maxFilas = h.length;
+    return h;
+  });
+
+  for (var i = 0; i < maxFilas; i++) {
     html += '<tr>';
-    for (var j = 0; j < 4; j++) {
-      html += '<td>' + (horas[i+j] || '') + '</td>';
-    }
+    columnas.forEach(function(col) {
+      html += '<td>' + (col[i] || '') + '</td>';
+    });
     html += '</tr>';
   }
   html += '</table>';
-  html += '<br><small>→ hasta ' + destino_rec + '</small>';
 
   return html;
 }
@@ -367,11 +382,13 @@ async function processMessage(text) {
       setContexto('linea', datos, 'Línea ' + datos.num + ' — ' + datos.nombre);
       historial = [];
       removeTyping();
-      var primera = datos.recorrido.length ? datos.recorrido[0].nombre : '';
-      var ultima = datos.recorrido.length ? datos.recorrido[datos.recorrido.length-1].nombre : '';
+      var sentidos = datos.sentidos || [];
+      var resumen = sentidos.map(function(s) {
+        return s.origen + ' → ' + s.destino;
+      }).join('<br>');
       addBotMsg('<strong>Línea ' + datos.num + ' — ' + datos.nombre + '</strong><br><br>' +
-        'Recorrido: ' + primera + ' → ' + ultima + ' (' + datos.recorrido.length + ' paradas)<br><br>' +
-        '¿Qué quieres saber?<br>• <strong>Horarios</strong> de hoy (laborable)<br>• <strong>Horarios del sábado</strong> o <strong>domingo</strong><br>• <strong>Paradas</strong> del recorrido completo');
+        resumen + '<br><br>' +
+        '¿Qué quieres saber?<br>• <strong>Horarios</strong> (laborable)<br>• <strong>Horarios del sábado</strong> o <strong>domingo</strong><br>• <strong>Paradas</strong> del recorrido completo');
       setLoading(false);
       return;
     }
@@ -440,14 +457,15 @@ async function llamarOpenAI(pregunta) {
   var ctx = '';
   if (contexto && contexto.tipo === 'linea') {
     var d = contexto.datos;
-    var horasLab = (d.horarios.laborable || []).join(', ');
-    var horasSab = (d.horarios.sabado || []).join(', ');
-    var horasDom = (d.horarios.domingo || []).join(', ');
-    var paradas = d.recorrido.map(function(p, i){ return (i+1) + '. [' + p.id + '] ' + p.nombre; }).join('\n');
-    ctx = 'LINEA ' + d.num + ': ' + d.nombre + '\nPARADAS:\n' + paradas +
-          '\nHORARIOS LABORABLE: ' + horasLab +
-          '\nHORARIOS SABADO: ' + horasSab +
-          '\nHORARIOS DOMINGO/FESTIVO: ' + horasDom;
+    var sentidos = d.sentidos || [];
+    ctx = 'LINEA ' + d.num + ': ' + d.nombre + '\n';
+    sentidos.forEach(function(s) {
+      ctx += '\nSENTIDO: ' + s.origen + ' -> ' + s.destino + '\n';
+      ctx += 'PARADAS: ' + s.recorrido.map(function(p,i){ return (i+1)+'. ['+p.id+'] '+p.nombre; }).join(', ') + '\n';
+      ctx += 'HORARIOS LABORABLE: ' + (s.horarios.laborable||[]).join(', ') + '\n';
+      ctx += 'HORARIOS SABADO: ' + (s.horarios.sabado||[]).join(', ') + '\n';
+      ctx += 'HORARIOS DOMINGO: ' + (s.horarios.domingo||[]).join(', ') + '\n';
+    });
   } else if (contexto && contexto.tipo === 'parada') {
     var dp = contexto.datos;
     ctx = 'PARADA ' + dp.id + ': ' + dp.nombre + '\nLINEAS: ' + dp.lineas.map(function(l){ return l.num + ' (' + l.nombre + ')'; }).join(', ');
