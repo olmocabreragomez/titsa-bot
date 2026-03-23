@@ -1,535 +1,103 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TITSA Asistente</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --verde: #1a7a3c; --amarillo: #f5c800; --amarillo-texto: #1a4a22; --fondo: #f4f4f0; --blanco: #fff; --texto: #1a1a1a; --texto-suave: #666; --borde: rgba(0,0,0,0.1); }
-    body { background: var(--fondo); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; height: 100vh; max-height: 780px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
-    .header { background: var(--verde); padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .header-icon { width: 38px; height: 38px; background: var(--amarillo); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .header-icon svg { width: 22px; height: 22px; }
-    .header-info h1 { font-size: 15px; font-weight: 600; color: #fff; }
-    .header-info p { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
-    .status { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.7); }
-    .status-dot { width: 7px; height: 7px; background: #5dde8a; border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(93,222,138,0.4); } 50% { box-shadow: 0 0 0 4px rgba(93,222,138,0); } }
-    #config-panel { display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex-shrink: 0; background: #fff8e1; border-bottom: 1px solid #f5c800; }
-    #config-panel label { font-size: 11px; color: #795900; white-space: nowrap; }
-    #apikey-field { flex:1; font-size: 11px; font-family:'DM Mono',monospace; padding: 4px 8px; border:1px solid #f5c800; border-radius:6px; min-width: 0; }
-    #save-key-btn { background:var(--verde); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; white-space:nowrap; }
-    .linea-banner { background: var(--amarillo); padding: 9px 16px; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .linea-nombre { font-size: 12px; font-weight: 500; color: var(--amarillo-texto); }
-    .chat { flex: 1; overflow-y: auto; background: var(--fondo); padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 92%; animation: fadeUp 0.2s ease; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
-    .msg.bot { align-self: flex-start; }
-    .msg.user { align-self: flex-end; }
-    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
-    .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.55; }
-    .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
-    .bot .bubble table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .bot .bubble th { background: var(--verde); color: #fff; padding: 5px 8px; text-align: center; font-weight: 500; }
-    .bot .bubble td { padding: 4px 8px; text-align: center; border-bottom: 1px solid var(--borde); }
-    .bot .bubble tr:nth-child(even) td { background: #f9f9f9; }
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 4px; background: var(--fondo); flex-shrink: 0; }
-    .chip { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--borde); background: var(--blanco); color: var(--texto); cursor: pointer; transition: all 0.15s; }
-    .chip:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
-    .input-area { background: var(--blanco); padding: 10px 12px; display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--borde); flex-shrink: 0; }
-    .chat-input { flex: 1; border: 1px solid var(--borde); border-radius: 22px; padding: 9px 16px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; background: var(--fondo); color: var(--texto); outline: none; transition: border-color 0.15s; }
-    .chat-input:focus { border-color: var(--verde); }
-    .chat-input:disabled { opacity: 0.5; }
-    .send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--verde); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
-    .send-btn:hover { opacity: 0.85; }
-    .send-btn:disabled { opacity: 0.4; cursor: default; }
-    .send-btn svg { width: 15px; height: 15px; }
-    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 14px; background: var(--blanco); border: 1px solid var(--borde); border-radius: 4px 16px 16px 16px; width: fit-content; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: #bbb; animation: bounce 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TITSA Bot</title>
+<style>
+body {
+  font-family: Arial;
+  background: #f4f4f4;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+}
+.app {
+  background:white;
+  width:400px;
+  padding:20px;
+  border-radius:10px;
+}
+.chat {
+  height:300px;
+  overflow-y:auto;
+  margin-bottom:10px;
+}
+.msg { margin-bottom:10px; }
+.user { text-align:right; }
+.bot { text-align:left; }
+input {
+  width:75%;
+  padding:10px;
+}
+button {
+  padding:10px;
+}
+</style>
 </head>
 <body>
+
 <div class="app">
-  <div class="header">
-    <div class="header-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#1a7a3c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 10h18M3 10l3-6h12l3 6M3 10v8a1 1 0 001 1h1m15-9v8a1 1 0 01-1 1h-1M7 19h10M7 19a2 2 0 01-2-2v-1h14v1a2 2 0 01-2 2"/>
-        <circle cx="7.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
-        <circle cx="16.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
-      </svg>
-    </div>
-    <div class="header-info">
-      <h1>TITSA Asistente</h1>
-      <p>Informacion de lineas y horarios</p>
-    </div>
-    <div class="status"><div class="status-dot"></div><span>En linea</span></div>
-  </div>
-
-  <div id="config-panel">
-    <label>API Key:</label>
-    <input id="apikey-field" type="password" placeholder="sk-..." />
-    <button id="save-key-btn" onclick="saveKey()">Guardar</button>
-  </div>
-
-  <div class="linea-banner" id="linea-banner" style="display:none">
-    <span class="linea-nombre" id="linea-nombre"></span>
-  </div>
-
   <div class="chat" id="chat"></div>
-
-  <div class="chips" id="chips" style="display:none">
-    <button class="chip" onclick="sendChip('Horarios de laborables')">Horarios laborables</button>
-    <button class="chip" onclick="sendChip('Horarios de fin de semana')">Fin de semana</button>
-    <button class="chip" onclick="sendChip('Recorrido y paradas')">Recorrido</button>
-    <button class="chip" onclick="cambiarLinea()">Cambiar linea</button>
-  </div>
-
-  <div class="input-area">
-    <input class="chat-input" id="input" type="text" placeholder="Ej: como ir al Puerto, horarios 103..." />
-    <button class="send-btn" id="send-btn" onclick="handleSend()">
-      <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
-    </button>
-  </div>
+  <input id="input" placeholder="Ej: línea 103">
+  <button onclick="send()">Enviar</button>
 </div>
 
 <script>
-var PROXY = 'https://titsa-proxy-p1z7.vercel.app';
-var OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
-var lineaActual = null;
-var lineaCache = {};
-var historial = [];
 
-var LINEAS = [
-  {n:'10',d:['aeropuerto sur','tfs','reina sofia']},
-  {n:'20',d:['aeropuerto norte','tfn','los rodeos']},
-  {n:'30',d:['aeropuerto norte','tfn','puerto de la cruz','puerto cruz']},
-  {n:'40',d:['aeropuerto sur','tfs','costa adeje','adeje','cristianos']},
-  {n:'11',d:['el sauzal','sauzal','tacoronte','calvario']},
-  {n:'12',d:['el sauzal','sauzal','tacoronte']},
-  {n:'14',d:['santa cruz','laguna','la cuesta']},
-  {n:'15',d:['santa cruz','laguna']},
-  {n:'18',d:['laguna','anaza','centros comerciales']},
-  {n:'21',d:['tacoronte','mesa del mar']},
-  {n:'23',d:['tacoronte','el pris']},
-  {n:'26',d:['santa cruz','laguna','barrio la salud','finca espana']},
-  {n:'32',d:['guimar','las eras','sombrera']},
-  {n:'33',d:['guimar','fasnia','sombrera']},
-  {n:'34',d:['granadilla','fasnia','arico']},
-  {n:'35',d:['guimar','granadilla','fasnia','arico']},
-  {n:'36',d:['guimar','granadilla']},
-  {n:'39',d:['guimar','granadilla']},
-  {n:'50',d:['laguna','tegueste','bajamar','punta del hidalgo']},
-  {n:'51',d:['laguna','tejina','tacoronte']},
-  {n:'52',d:['laguna','tegueste']},
-  {n:'54',d:['laguna','el sauzal','sauzal']},
-  {n:'55',d:['laguna','barranco grande','geneto']},
-  {n:'56',d:['laguna','barranco grande','llano del moro']},
-  {n:'57',d:['laguna','tacoronte','tejina']},
-  {n:'76',d:['laguna','cruz del carmen','afur','anaga']},
-  {n:'77',d:['laguna','el bailadero','las mercedes','anaga']},
-  {n:'100',d:['santa cruz','puerto de la cruz','puerto cruz']},
-  {n:'101',d:['laguna','la orotava','orotava']},
-  {n:'102',d:['santa cruz','puerto de la cruz','puerto cruz','las arenas']},
-  {n:'103',d:['laguna','puerto de la cruz','puerto cruz','botanico']},
-  {n:'104',d:['santa cruz','puerto de la cruz','puerto cruz','tacoronte']},
-  {n:'105',d:['santa cruz','punta del hidalgo','laguna']},
-  {n:'106',d:['santa cruz','icod de los vinos','icod']},
-  {n:'108',d:['icod','icod de los vinos','santa cruz']},
-  {n:'110',d:['santa cruz','costa adeje','adeje']},
-  {n:'111',d:['santa cruz','costa adeje','adeje','cristianos','los cristianos']},
-  {n:'112',d:['santa cruz','los cristianos','cristianos']},
-  {n:'114',d:['santa cruz','san isidro']},
-  {n:'120',d:['santa cruz','candelaria','guimar']},
-  {n:'121',d:['guimar','arafo','candelaria']},
-  {n:'122',d:['santa cruz','las caletillas','candelaria']},
-  {n:'126',d:['candelaria','campus guajara','hospital la candelaria','santa cruz']},
-  {n:'127',d:['guimar','candelaria']},
-  {n:'128',d:['santa cruz','arafo','guimar']},
-  {n:'138',d:['santa cruz','radazul','tabaiba']},
-  {n:'139',d:['santa cruz','radazul','tabaiba']},
-  {n:'142',d:['santa cruz','anaza','acoran','barranco hondo']},
-  {n:'201',d:['laguna','verdellada']},
-  {n:'203',d:['laguna','san lazaro','trinidad']},
-  {n:'204',d:['laguna','lomo largo','trinidad']},
-  {n:'206',d:['laguna','la verdellada','san benito']},
-  {n:'217',d:['laguna','cardonal','hospital universitario']},
-  {n:'219',d:['laguna','el cardonal','taco','san matias']},
-  {n:'224',d:['laguna','valle guerra','tejina']},
-  {n:'228',d:['santa cruz','los campitos','la cuesta']},
-  {n:'231',d:['santa cruz','la gallega']},
-  {n:'232',d:['santa cruz','el cardonal','la gallega']},
-  {n:'233',d:['santa cruz','el cardonal','finca espana']},
-  {n:'238',d:['santa cruz','san matias','chamberi']},
-  {n:'253',d:['laguna','guamasa','garimba']},
-  {n:'260',d:['laguna','santa cruz','llano del moro']},
-  {n:'270',d:['laguna','las mercedes','anaga']},
-  {n:'271',d:['laguna','las mercedes']},
-  {n:'273',d:['laguna','cruz del carmen','las mercedes']},
-  {n:'274',d:['laguna','el batan','las mercedes']},
-  {n:'275',d:['laguna','las carboneras','taborno']},
-  {n:'325',d:['puerto de la cruz','puerto cruz','icod','los gigantes']},
-  {n:'330',d:['los realejos','realejos','san vicente']},
-  {n:'341',d:['parador','teleferico','el portillo','teide','las canadas']},
-  {n:'342',d:['costa adeje','adeje','cristianos','el portillo','teide','las canadas']},
-  {n:'343',d:['puerto de la cruz','puerto cruz','costa adeje','adeje','aeropuerto norte','aeropuerto sur']},
-  {n:'345',d:['puerto de la cruz','puerto cruz','orotava','la orotava','aguamansa']},
-  {n:'346',d:['orotava','la orotava','aguamansa','la caldera']},
-  {n:'347',d:['la orotava','orotava','palo blanco','realejos']},
-  {n:'348',d:['puerto de la cruz','puerto cruz','el portillo','teide','las canadas']},
-  {n:'351',d:['puerto de la cruz','puerto cruz','botanico','la orotava','orotava']},
-  {n:'352',d:['puerto de la cruz','puerto cruz','orotava','la orotava','realejos']},
-  {n:'353',d:['puerto de la cruz','puerto cruz','realejos','orotava']},
-  {n:'354',d:['icod de los vinos','icod','los realejos','realejos']},
-  {n:'355',d:['buenavista','masca','santiago del teide']},
-  {n:'357',d:['icod de los vinos','icod','hospital del norte']},
-  {n:'358',d:['icod de los vinos','icod','santa barbara']},
-  {n:'360',d:['icod de los vinos','icod','puerto de erjos']},
-  {n:'362',d:['icod de los vinos','icod','playa san marcos']},
-  {n:'363',d:['puerto de la cruz','puerto cruz','buenavista','icod de los vinos','icod']},
-  {n:'364',d:['icod','hospital del norte','la guancha','san juan de la rambla']},
-  {n:'365',d:['buenavista','masca']},
-  {n:'366',d:['buenavista','el palmar','las portelas']},
-  {n:'369',d:['buenavista','punta de teno','teno']},
-  {n:'372',d:['las dehesas','san antonio','la piedad']},
-  {n:'373',d:['las dehesas','la piedad']},
-  {n:'376',d:['la orotava','orotava','las dehesas']},
-  {n:'380',d:['la orotava','orotava','tigaiga']},
-  {n:'381',d:['puerto de la cruz','puerto cruz','loro parque']},
-  {n:'382',d:['puerto de la cruz','puerto cruz','la vera']},
-  {n:'383',d:['puerto de la cruz','puerto cruz','las arenas','la vera']},
-  {n:'385',d:['puerto de la cruz','puerto cruz','botanico','taoro']},
-  {n:'390',d:['puerto de la cruz','puerto cruz','la vera','realejos']},
-  {n:'392',d:['icod de los vinos','icod','el tanque']},
-  {n:'408',d:['granadilla','san isidro','el medano','medano']},
-  {n:'409',d:['san miguel','granadilla','san isidro','el medano','medano']},
-  {n:'410',d:['granadilla','san isidro','el medano','medano','los abrigos']},
-  {n:'411',d:['granadilla','san isidro','el medano','medano']},
-  {n:'412',d:['granadilla','san isidro','los abrigos']},
-  {n:'415',d:['aeropuerto sur','tfs','san isidro','las galletas','el fraile']},
-  {n:'416',d:['granadilla','san miguel','valle san lorenzo','los cristianos','cristianos']},
-  {n:'417',d:['costa adeje','adeje','guia de isora','isora']},
-  {n:'418',d:['costa adeje','adeje','valle san lorenzo']},
-  {n:'419',d:['granadilla','san miguel','vilaflor']},
-  {n:'421',d:['valle san lorenzo','cabo blanco','las galletas']},
-  {n:'424',d:['los cristianos','cristianos','costa adeje','adeje','torviscas']},
-  {n:'430',d:['granadilla','arico','poris']},
-  {n:'447',d:['los cristianos','cristianos','costa adeje','adeje']},
-  {n:'450',d:['costa adeje','adeje','los cristianos','cristianos','san isidro']},
-  {n:'452',d:['san isidro','costa adeje','adeje','la caleta']},
-  {n:'460',d:['icod de los vinos','icod','guia de isora','isora','costa adeje','adeje']},
-  {n:'461',d:['arguayo','los gigantes','gigantes']},
-  {n:'462',d:['guia de isora','isora','valle santiago','los gigantes','gigantes']},
-  {n:'463',d:['chimiche','granadilla']},
-  {n:'467',d:['costa del silencio','los cristianos','cristianos','costa adeje','adeje','caleta']},
-  {n:'468',d:['guaza','el fraile','costa del silencio','guargacho','palm mar']},
-  {n:'470',d:['el medano','medano','golf del sur','las galletas','los cristianos','cristianos']},
-  {n:'471',d:['los cristianos','cristianos','costa adeje','adeje','playa paraiso']},
-  {n:'473',d:['los cristianos','cristianos','costa adeje','adeje','callao salvaje','los gigantes','gigantes']},
-  {n:'475',d:['granadilla','cruz de tea']},
-  {n:'477',d:['costa adeje','adeje','los gigantes','gigantes']},
-  {n:'480',d:['arona','la camella','chayofa','los cristianos','cristianos']},
-  {n:'482',d:['vilaflor','arona','la camella','cabo blanco','los cristianos','cristianos']},
-  {n:'483',d:['los cristianos','cristianos','guaza','chafiras','los abrigos']},
-  {n:'484',d:['granadilla','san miguel','aldea blanca','las chafiras']},
-  {n:'486',d:['granadilla','san miguel','aldea blanca','las chafiras','el fraile']},
-  {n:'490',d:['guia de isora','isora','tejina']},
-  {n:'492',d:['chiguergue','guia de isora','isora']},
-  {n:'493',d:['guia de isora','isora','alcala']},
-  {n:'494',d:['guia de isora','isora','alcala']},
-  {n:'605',d:['orotava','la orotava','campus guajara','ull','universidad','hospitales']},
-  {n:'606',d:['icod de los vinos','icod','campus guajara','ull','universidad']},
-  {n:'608',d:['los realejos','realejos','campus guajara','ull','universidad']},
-  {n:'611',d:['costa adeje','adeje','universidad','ull','hospital']},
-  {n:'711',d:['santa cruz','aeropuerto sur','tfs','los cristianos','cristianos','costa adeje','adeje']},
-  {n:'901',d:['santa cruz','barrio la salud','miraflores']},
-  {n:'902',d:['santa cruz','plaza los patos','barrio nuevo']},
-  {n:'903',d:['santa cruz','muelle norte','ramblas','moraditas']},
-  {n:'904',d:['santa cruz','plaza weyler','barrio la salud','cuesta piedra']},
-  {n:'905',d:['santa cruz','muelle norte','ofra']},
-  {n:'906',d:['santa cruz','barrio la salud']},
-  {n:'908',d:['santa cruz','barrio de ofra']},
-  {n:'909',d:['santa cruz','barrio de la alegria']},
-  {n:'910',d:['santa cruz','san andres','playa de las teresitas','teresitas']},
-  {n:'911',d:['santa cruz','muelle norte','ramblas','barrio la salud']},
-  {n:'912',d:['santa cruz','ifara','los campitos']},
-  {n:'914',d:['santa cruz','plaza weyler','plaza de espana']},
-  {n:'916',d:['santa cruz','maria jimenez','los valles']},
-  {n:'917',d:['santa cruz','valleseco']},
-  {n:'919',d:['santa cruz','barrio la salud','cuesta piedra','barranco de santos']},
-  {n:'920',d:['santa cruz','plaza de espana','la marina','ramblas']},
-  {n:'921',d:['santa cruz','reyes catolicos']},
-  {n:'923',d:['santa cruz','muelle norte','ramblas','moraditas']},
-  {n:'933',d:['santa cruz','taco','barranco grande','el tablero']},
-  {n:'934',d:['santa cruz','taco','santa maria del mar','anaza']},
-  {n:'935',d:['santa cruz','anaza','alisios','santa maria del mar']},
-  {n:'936',d:['santa cruz','anaza','santa maria del mar','taco']},
-  {n:'937',d:['santa cruz','taco','tincer','el sobradillo']},
-  {n:'939',d:['taco','el sobradillo','llano del moro']},
-  {n:'940',d:['santa cruz','acoran','costanera']},
-  {n:'941',d:['santa cruz','anaza','acoran','boca cangrejo']},
-  {n:'944',d:['el tablero','la gallega','tincer','taco']},
-  {n:'945',d:['santa cruz','san andres','igueste de san andres']},
-  {n:'946',d:['santa cruz','san andres','taganana','almaciga','anaga']},
-  {n:'947',d:['santa cruz','san andres','bailadero','chamorga','anaga']},
-  {n:'970',d:['santa cruz','san andres']},
-  {n:'971',d:['santa cruz','barrio la salud','ofra']},
-  {n:'972',d:['santa cruz','barrio la salud','cuesta piedra']},
-  {n:'974',d:['santa cruz','taco','anaza','santa maria del mar']},
-  {n:'975',d:['santa cruz','tincer','la gallega']}
-];
+const PROXY = "https://titsa-proxy-f1oci50yf-olmocabreragomez-4505s-projects.vercel.app";
 
-if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
-document.getElementById('input').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSend(); });
-addBotMsg('Hola! Soy el asistente de TITSA.<br>Puedes preguntarme como llegar a cualquier sitio o consultar los horarios de una linea.');
-
-function saveKey() {
-  var val = document.getElementById('apikey-field').value.trim();
-  if (!val.startsWith('sk-')) { alert('La key debe empezar por sk-'); return; }
-  OPENAI_KEY = val;
-  localStorage.setItem('titsa_openai_key', val);
-  document.getElementById('config-panel').style.display = 'none';
-}
-
-function now() { return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }); }
-
-function addBotMsg(html) {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
-  el.className = 'msg bot';
-  el.innerHTML = '<div class="bubble">' + html + '</div><span class="msg-time">' + now() + '</span>';
-  chat.appendChild(el);
+function addMsg(text, type){
+  const chat = document.getElementById("chat");
+  const div = document.createElement("div");
+  div.className = "msg " + type;
+  div.innerHTML = text;
+  chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function addUserMsg(text) {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
-  el.className = 'msg user';
-  el.innerHTML = '<div class="bubble">' + text + '</div><span class="msg-time">' + now() + '</span>';
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
-}
+async function send(){
+  const input = document.getElementById("input");
+  const text = input.value;
+  input.value = "";
 
-function showTyping() {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
-  el.id = 'typing'; el.className = 'msg bot';
-  el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
-}
+  addMsg(text, "user");
 
-function removeTyping() { var t = document.getElementById('typing'); if (t) t.remove(); }
-function setLoading(on) { document.getElementById('input').disabled = on; document.getElementById('send-btn').disabled = on; }
+  const match = text.match(/\d+/);
 
-function setLinea(datos) {
-  lineaActual = datos;
-  document.getElementById('linea-nombre').textContent = 'Linea ' + datos.linea + ' - ' + datos.nombre;
-  document.getElementById('linea-banner').style.display = 'flex';
-  document.getElementById('chips').style.display = 'flex';
-}
+  if(!match){
+    addMsg("❌ Escribe un número de línea (ej: 103)", "bot");
+    return;
+  }
 
-function cambiarLinea() {
-  lineaActual = null; historial = [];
-  document.getElementById('linea-banner').style.display = 'none';
-  document.getElementById('chips').style.display = 'none';
-  addBotMsg('De acuerdo, adonde quieres ir o que linea consultas?');
-}
+  const linea = match[0];
 
-async function consultarLinea(num) {
-  var key = num.toString();
-  if (lineaCache[key]) return lineaCache[key];
-  try {
-    var res = await fetch(PROXY + '/api/titsa?linea=' + key);
-    var data = await res.json();
-    if (!data.error) lineaCache[key] = data;
-    return data;
-  } catch(e) { return { error: 'Sin conexion' }; }
-}
+  addMsg("Buscando...", "bot");
 
-function normalizar(s) {
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
+  try{
+    const res = await fetch(`${PROXY}/api/titsa?linea=${linea}`);
+    const data = await res.json();
 
-function esConsultaDeRuta(texto) {
-  return /llegar|como ir|como voy|que guagua|qu[ee] l[ii]nea|que bus|desde.*hasta|ir a|voy a|coger para|para ir|para llegar|como puedo ir|como llego/i.test(texto);
-}
-
-function extraerNumeroLinea(texto) {
-  if (esConsultaDeRuta(texto)) return null;
-  var m = texto.match(/l[ii]nea\s+(\d{1,3})/i);
-  if (m) return m[1];
-  m = texto.match(/^(\d{1,3})$/);
-  if (m) return m[1];
-  m = texto.match(/\b(\d{2,3})\b/);
-  if (m) return m[1];
-  return null;
-}
-
-function buscarLineasPorRuta(texto) {
-  var t = normalizar(texto);
-  var puntuadas = [];
-  for (var i = 0; i < LINEAS.length; i++) {
-    var puntos = 0;
-    for (var j = 0; j < LINEAS[i].d.length; j++) {
-      if (t.includes(normalizar(LINEAS[i].d[j]))) puntos++;
+    if(data.error){
+      addMsg("❌ Línea no encontrada", "bot");
+      return;
     }
-    if (puntos >= 2) puntuadas.push({ num: LINEAS[i].n, puntos: puntos });
-  }
-  puntuadas.sort(function(a, b) { return b.puntos - a.puntos; });
-  return puntuadas.map(function(p) { return p.num; });
-}
 
-// Convierte el texto de la IA en HTML seguro — NO toca etiquetas HTML existentes
-function procesarRespuesta(texto) {
-  // Eliminar saltos de linea justo antes y despues de etiquetas de tabla
-  texto = texto.replace(/\n+(<table)/gi, '$1');
-  texto = texto.replace(/(\/table>)\n+/gi, '$1');
-  texto = texto.replace(/(<\/tr>)\n+/gi, '$1');
-  texto = texto.replace(/\n+(<tr)/gi, '$1');
-  texto = texto.replace(/(<\/th>)\n+/gi, '$1');
-  texto = texto.replace(/(<\/td>)\n+/gi, '$1');
+    addMsg(`
+      <b>Línea ${data.linea} - ${data.nombre}</b><br><br>
+      <b>Recorrido:</b> ${data.recorrido}<br>
+      <b>Duración:</b> ${data.duracion}<br><br>
+      <b>Horarios:</b><br>
+      ${data.horarios.join("<br>")}
+    `, "bot");
 
-  // Eliminar markdown
-  texto = texto
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.*?)\*/g, '$1')
-    .replace(/#{1,6}\s*/g, '');
-
-  // Convertir saltos de linea que esten FUERA de etiquetas HTML en <br>
-  // Separar por bloques HTML vs texto plano
-  var resultado = '';
-  var partes = texto.split(/(<(?:table|thead|tbody|tr|th|td|\/table|\/thead|\/tbody|\/tr|\/th|\/td)[^>]*>)/gi);
-  var dentroTabla = false;
-  for (var i = 0; i < partes.length; i++) {
-    if (partes[i].match(/^<(table|thead|tbody|tr|th|td)[^>]*>$/i)) {
-      dentroTabla = true;
-      resultado += partes[i];
-    } else if (partes[i].match(/^<\/(table|thead|tbody|tr|th|td)>$/i)) {
-      dentroTabla = false;
-      resultado += partes[i];
-    } else if (dentroTabla) {
-      resultado += partes[i];
-    } else {
-      resultado += partes[i].replace(/\n/g, '<br>');
-    }
-  }
-  return resultado;
-}
-
-async function handleSend() {
-  var input = document.getElementById('input');
-  var text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  await processMessage(text);
-}
-
-async function sendChip(text) { await processMessage(text); }
-
-async function processMessage(text) {
-  if (!OPENAI_KEY) { addBotMsg('Introduce tu API Key arriba y pulsa Guardar.'); return; }
-  addUserMsg(text);
-  setLoading(true);
-  showTyping();
-
-  var datosLineas = [];
-  var numDetectado = extraerNumeroLinea(text);
-
-  if (numDetectado) {
-    var datos = await consultarLinea(numDetectado);
-    if (!datos.error) {
-      var esNueva = !lineaActual || lineaActual.linea !== datos.linea;
-      lineaActual = datos; setLinea(datos);
-      if (esNueva) historial = [];
-      datosLineas = [datos];
-    } else {
-      removeTyping();
-      addBotMsg('No he encontrado la linea ' + numDetectado + ' en TITSA.');
-      setLoading(false); return;
-    }
-  } else if (esConsultaDeRuta(text)) {
-    var lineasOrdenadas = buscarLineasPorRuta(text);
-    if (lineasOrdenadas.length > 0) {
-      for (var i = 0; i < Math.min(2, lineasOrdenadas.length); i++) {
-        var d = await consultarLinea(lineasOrdenadas[i]);
-        if (!d.error) {
-          datosLineas.push(d);
-          if (!lineaActual) { lineaActual = d; setLinea(d); }
-        }
-      }
-    } else if (lineaActual) {
-      datosLineas = [lineaActual];
-    }
-  } else if (lineaActual) {
-    datosLineas = [lineaActual];
-  }
-
-  historial.push({ role: 'user', content: text });
-
-  try {
-    var respuesta = await llamarOpenAI(datosLineas, text);
-    respuesta = procesarRespuesta(respuesta);
-    removeTyping();
-    addBotMsg(respuesta);
-    historial.push({ role: 'assistant', content: respuesta });
-  } catch(e) {
-    removeTyping();
-    addBotMsg('Error: ' + e.message);
-  } finally {
-    setLoading(false);
+  }catch(e){
+    addMsg("❌ Error al conectar", "bot");
   }
 }
 
-async function llamarOpenAI(datosLineas, pregunta) {
-  var esPrimeraVez = historial.length <= 1;
-  var esRuta = esConsultaDeRuta(pregunta);
-
-  var contexto = '';
-  if (datosLineas.length > 0) {
-    for (var i = 0; i < datosLineas.length; i++) {
-      contexto += 'LINEA ' + datosLineas[i].linea + ' (' + datosLineas[i].nombre + '):\n' + datosLineas[i].contenido + '\n\n---\n\n';
-    }
-  }
-
-  var instrucciones;
-  if (esRuta) {
-    instrucciones = 'El usuario pregunta como llegar o que guagua coger. '
-      + 'Identifica la linea correcta y responde con: numero de linea y una tabla HTML con los horarios principales. '
-      + 'Formato exacto: una frase corta indicando la linea, luego INMEDIATAMENTE la tabla sin saltos de linea entre medias.';
-  } else if (esPrimeraVez && datosLineas.length > 0) {
-    instrucciones = 'Primera consulta. Presenta la linea en 2 lineas cortas: nombre y recorrido. Pregunta que necesita saber.';
-  } else {
-    instrucciones = 'Responde con los datos. '
-      + 'Si pide horarios: una frase corta y luego DIRECTAMENTE la tabla HTML. '
-      + 'Si pide recorrido: lista paradas con ->.';
-  }
-
-  var sistema = 'Eres el asistente de TITSA Tenerife. Responde en espanol, amable y conciso. '
-    + 'Usa HTML: <strong>, <br>, <table><thead><tr><th><tbody><td>. '
-    + 'PROHIBIDO: asteriscos, almohadillas, markdown. NUNCA inventes datos.\n\n'
-    + instrucciones + '\n\n'
-    + (contexto || 'Sin datos. Pide al usuario destino o linea.');
-
-  var res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini', max_tokens: 700,
-      messages: [{ role: 'system', content: sistema }].concat(historial)
-    })
-  });
-
-  if (!res.ok) { var e = await res.json(); throw new Error(e.error ? e.error.message : res.statusText); }
-  var data = await res.json();
-  return data.choices[0].message.content;
-}
 </script>
+
 </body>
 </html>
