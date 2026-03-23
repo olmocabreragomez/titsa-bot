@@ -3,81 +3,263 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TITSA – Asistente</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
+  <title>TITSA – Asistente de Guaguas</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=DM+Mono:wght@500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --verde: #1a7a3c; --amarillo: #f5c800; --amarillo-texto: #1a4a22;
-      --fondo: #f4f4f0; --blanco: #ffffff; --texto: #1a1a1a;
-      --texto-suave: #666; --borde: rgba(0,0,0,0.1);
+      --verde: #1a7a3c; --verde-oscuro: #155f30; --verde-bg: rgba(26,122,60,0.08);
+      --amarillo: #f5c800; --amarillo-texto: #6b4f00;
+      --fondo: #f0f0ec; --blanco: #ffffff; --texto: #1a1a1a;
+      --texto-suave: #777; --borde: rgba(0,0,0,0.09);
+      --sombra: 0 8px 40px rgba(0,0,0,0.11);
     }
-    body { background: var(--fondo); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1rem; }
-    .app { width: 100%; max-width: 440px; display: flex; flex-direction: column; height: 100vh; max-height: 780px; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 40px rgba(0,0,0,0.12); }
-    .header { background: var(--verde); padding: 14px 16px; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .header-icon { width: 38px; height: 38px; background: var(--amarillo); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-    .header-icon svg { width: 22px; height: 22px; }
-    .header-info h1 { font-size: 15px; font-weight: 600; color: #fff; }
-    .header-info p { font-size: 11px; color: rgba(255,255,255,0.65); margin-top: 1px; }
-    .status { margin-left: auto; display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.7); }
-    .status-dot { width: 7px; height: 7px; background: #5dde8a; border-radius: 50%; animation: pulse 2s infinite; }
-    @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(93,222,138,0.4); } 50% { box-shadow: 0 0 0 4px rgba(93,222,138,0); } }
+    body {
+      background: var(--fondo);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 0.75rem;
+    }
+    .app {
+      width: 100%; max-width: 460px;
+      display: flex; flex-direction: column;
+      height: 100vh; max-height: 820px;
+      border-radius: 22px; overflow: hidden;
+      box-shadow: var(--sombra);
+      background: var(--blanco);
+    }
 
-    #config-panel { display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex-shrink: 0; background: #fff8e1; border-bottom: 1px solid #f5c800; }
-    #config-panel label { font-size: 11px; color: #795900; white-space: nowrap; }
-    #apikey-field { flex:1; font-size: 11px; font-family:'DM Mono',monospace; padding: 4px 8px; border:1px solid #f5c800; border-radius:6px; min-width: 0; }
-    #save-key-btn { background:var(--verde); color:#fff; border:none; border-radius:6px; padding:4px 10px; font-size:11px; cursor:pointer; white-space:nowrap; }
+    /* Header */
+    .header {
+      background: var(--verde);
+      padding: 13px 16px;
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .header-icon {
+      width: 36px; height: 36px;
+      background: var(--amarillo);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .header-icon svg { width: 20px; height: 20px; }
+    .header-info h1 { font-size: 14px; font-weight: 600; color: #fff; }
+    .header-info p { font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 1px; }
+    .status {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 10px; color: rgba(255,255,255,0.65);
+    }
+    .status-dot {
+      width: 6px; height: 6px;
+      background: #5dde8a; border-radius: 50%;
+      animation: pulse 2.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(93,222,138,0.5); }
+      50% { box-shadow: 0 0 0 4px rgba(93,222,138,0); }
+    }
 
-    .context-banner { background: var(--amarillo); padding: 9px 16px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-shrink: 0; }
-    .context-texto { font-size: 12px; font-weight: 500; color: var(--amarillo-texto); }
-    .context-reset { font-size: 11px; color: var(--verde); background: none; border: none; cursor: pointer; text-decoration: underline; font-family: 'DM Sans', sans-serif; }
+    /* API key panel */
+    #config-panel {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 12px; flex-shrink: 0;
+      background: #fffbea; border-bottom: 1px solid #f5c800;
+    }
+    #config-panel label { font-size: 11px; color: #7a5800; white-space: nowrap; }
+    #apikey-field {
+      flex: 1; font-size: 11px; font-family: 'DM Mono', monospace;
+      padding: 4px 8px; border: 1px solid #f5c800; border-radius: 6px; min-width: 0;
+    }
+    #save-key-btn {
+      background: var(--verde); color: #fff; border: none;
+      border-radius: 6px; padding: 4px 10px; font-size: 11px;
+      cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif;
+    }
 
-    .chat { flex: 1; overflow-y: auto; background: var(--fondo); padding: 16px 12px; display: flex; flex-direction: column; gap: 12px; scroll-behavior: smooth; }
-    .msg { display: flex; flex-direction: column; gap: 3px; max-width: 92%; animation: fadeUp 0.2s ease; }
-    @keyframes fadeUp { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
-    .msg.bot { align-self: flex-start; }
+    /* Context banner */
+    .ctx-banner {
+      background: var(--amarillo); padding: 8px 14px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .ctx-texto { font-size: 12px; font-weight: 600; color: var(--amarillo-texto); }
+    .ctx-reset {
+      font-size: 11px; color: var(--verde); background: none;
+      border: none; cursor: pointer; text-decoration: underline;
+      font-family: 'DM Sans', sans-serif;
+    }
+
+    /* Chat */
+    .chat {
+      flex: 1; overflow-y: auto;
+      background: var(--fondo);
+      padding: 14px 11px;
+      display: flex; flex-direction: column; gap: 11px;
+      scroll-behavior: smooth;
+    }
+    .msg {
+      display: flex; flex-direction: column; gap: 3px;
+      max-width: 93%;
+      animation: fadeUp 0.18s ease;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .msg.bot  { align-self: flex-start; }
     .msg.user { align-self: flex-end; }
-    .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 4px 16px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
-    .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 4px 16px 16px; padding: 10px 14px; font-size: 13.5px; line-height: 1.6; }
+    .bot .bubble {
+      background: var(--blanco);
+      border: 1px solid var(--borde);
+      color: var(--texto);
+      border-radius: 3px 16px 16px 16px;
+      padding: 10px 13px;
+      font-size: 13px; line-height: 1.6;
+    }
+    .user .bubble {
+      background: var(--verde);
+      color: #fff;
+      border-radius: 16px 3px 16px 16px;
+      padding: 10px 13px;
+      font-size: 13px; line-height: 1.6;
+    }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
 
-    /* Tablas de horarios */
-    .bubble table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; }
-    .bubble th { background: var(--verde); color: white; padding: 5px 8px; text-align: left; font-weight: 600; }
-    .bubble td { padding: 4px 8px; border-bottom: 1px solid var(--borde); }
-    .bubble tr:nth-child(even) td { background: #f9f9f7; }
+    /* Tablas */
+    .bubble table {
+      border-collapse: collapse;
+      width: 100%; margin-top: 9px;
+      font-size: 12px;
+    }
+    .bubble th {
+      background: var(--verde); color: #fff;
+      padding: 6px 8px; text-align: center;
+      font-weight: 600; font-size: 11px; line-height: 1.35;
+    }
+    .bubble td {
+      padding: 4px 8px; border-bottom: 1px solid var(--borde);
+      text-align: center;
+    }
+    .bubble tr:nth-child(even) td { background: #f7f7f4; }
 
     /* Listas de paradas */
-    .bubble .parada-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; font-size: 12.5px; }
-    .bubble .parada-id { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--verde); background: rgba(26,122,60,0.1); padding: 1px 5px; border-radius: 4px; flex-shrink: 0; }
+    .parada-item {
+      display: flex; align-items: center; gap: 7px;
+      padding: 2px 0; font-size: 12.5px;
+    }
+    .parada-id {
+      font-family: 'DM Mono', monospace; font-size: 10px;
+      color: var(--verde); background: var(--verde-bg);
+      padding: 1px 6px; border-radius: 4px;
+      flex-shrink: 0; white-space: nowrap;
+    }
+    .parada-num {
+      font-size: 10px; color: var(--texto-suave);
+      min-width: 18px; text-align: right; flex-shrink: 0;
+    }
 
-    .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 4px; background: var(--fondo); flex-shrink: 0; }
-    .chip { font-size: 12px; font-family: 'DM Sans', sans-serif; padding: 6px 12px; border-radius: 20px; border: 1px solid var(--borde); background: var(--blanco); color: var(--texto); cursor: pointer; transition: all 0.15s; }
+    /* Ruta / transbordo */
+    .ruta-bloque {
+      background: var(--verde-bg);
+      border-left: 3px solid var(--verde);
+      border-radius: 0 8px 8px 0;
+      padding: 8px 10px; margin-top: 6px;
+      font-size: 12.5px;
+    }
+    .ruta-linea {
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 600; margin-bottom: 2px;
+    }
+    .ruta-badge {
+      background: var(--verde); color: #fff;
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      padding: 1px 7px; border-radius: 5px;
+    }
+    .ruta-arrow {
+      color: var(--verde); font-weight: 700;
+      display: flex; align-items: center; gap: 5px;
+      font-size: 12px; margin: 5px 0;
+    }
+    .transbordo-tag {
+      display: inline-block;
+      background: var(--amarillo); color: var(--amarillo-texto);
+      font-size: 10px; font-weight: 600;
+      padding: 2px 7px; border-radius: 5px; margin-right: 5px;
+    }
+    .ruta-horarios {
+      font-size: 11px; color: var(--texto-suave); margin-top: 3px;
+    }
+
+    /* Chips */
+    .chips {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      padding: 7px 11px 4px;
+      background: var(--fondo); flex-shrink: 0;
+    }
+    .chip {
+      font-size: 11.5px; font-family: 'DM Sans', sans-serif;
+      padding: 5px 11px; border-radius: 18px;
+      border: 1px solid var(--borde);
+      background: var(--blanco); color: var(--texto);
+      cursor: pointer; transition: all 0.13s;
+    }
     .chip:hover { background: var(--verde); color: #fff; border-color: var(--verde); }
 
-    .input-area { background: var(--blanco); padding: 10px 12px; display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--borde); flex-shrink: 0; }
-    .chat-input { flex: 1; border: 1px solid var(--borde); border-radius: 22px; padding: 9px 16px; font-size: 13.5px; font-family: 'DM Sans', sans-serif; background: var(--fondo); color: var(--texto); outline: none; transition: border-color 0.15s; }
+    /* Input */
+    .input-area {
+      background: var(--blanco); padding: 9px 11px;
+      display: flex; gap: 7px; align-items: center;
+      border-top: 1px solid var(--borde); flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1; border: 1px solid var(--borde); border-radius: 20px;
+      padding: 9px 15px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--fondo); color: var(--texto);
+      outline: none; transition: border-color 0.13s;
+    }
     .chat-input:focus { border-color: var(--verde); }
     .chat-input:disabled { opacity: 0.5; }
-    .send-btn { width: 36px; height: 36px; border-radius: 50%; background: var(--verde); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.15s; }
-    .send-btn:hover { opacity: 0.85; }
-    .send-btn:disabled { opacity: 0.4; cursor: default; }
-    .send-btn svg { width: 15px; height: 15px; }
+    .send-btn {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: var(--verde); border: none;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: opacity 0.13s;
+    }
+    .send-btn:hover { opacity: 0.82; }
+    .send-btn:disabled { opacity: 0.38; cursor: default; }
+    .send-btn svg { width: 14px; height: 14px; }
 
-    .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 14px; background: var(--blanco); border: 1px solid var(--borde); border-radius: 4px 16px 16px 16px; width: fit-content; }
-    .dot { width: 6px; height: 6px; border-radius: 50%; background: #bbb; animation: bounce 1.2s infinite; }
+    /* Typing */
+    .typing-indicator {
+      display: flex; align-items: center; gap: 4px;
+      padding: 10px 13px;
+      background: var(--blanco); border: 1px solid var(--borde);
+      border-radius: 3px 16px 16px 16px; width: fit-content;
+    }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #bbb; animation: bounce 1.2s infinite;
+    }
     .dot:nth-child(2) { animation-delay: 0.2s; }
     .dot:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
+    @keyframes bounce {
+      0%,80%,100% { transform: translateY(0); }
+      40%          { transform: translateY(-5px); }
+    }
   </style>
 </head>
 <body>
 <div class="app">
+
   <div class="header">
     <div class="header-icon">
       <svg viewBox="0 0 24 24" fill="none" stroke="#1a7a3c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M3 10h18M3 10l3-6h12l3 6M3 10v8a1 1 0 001 1h1m15-9v8a1 1 0 01-1 1h-1M7 19h10M7 19a2 2 0 01-2-2v-1h14v1a2 2 0 01-2 2"/>
-        <circle cx="7.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
+        <circle cx="7.5"  cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
         <circle cx="16.5" cy="19.5" r="1" fill="#1a7a3c" stroke="none"/>
       </svg>
     </div>
@@ -94,164 +276,248 @@
     <button id="save-key-btn" onclick="saveKey()">Guardar</button>
   </div>
 
-  <div class="context-banner" id="context-banner" style="display:none">
-    <span class="context-texto" id="context-texto"></span>
-    <button class="context-reset" onclick="resetContexto()">Cambiar</button>
+  <div class="ctx-banner" id="ctx-banner" style="display:none">
+    <span class="ctx-texto" id="ctx-texto"></span>
+    <button class="ctx-reset" onclick="resetCtx()">Cambiar</button>
   </div>
 
   <div class="chat" id="chat"></div>
 
   <div class="chips" id="chips" style="display:none">
-    <button class="chip" onclick="sendChip('Horarios de hoy')">Horarios hoy</button>
-    <button class="chip" onclick="sendChip('Todas las paradas')">Paradas</button>
-    <button class="chip" onclick="sendChip('Horarios del sábado')">Sábado</button>
-    <button class="chip" onclick="sendChip('Horarios del domingo')">Domingo</button>
+    <button class="chip" id="chip-horarios"  onclick="sendChip('horarios laborable')">Horarios hoy</button>
+    <button class="chip" id="chip-paradas"   onclick="sendChip('paradas del recorrido')">Paradas</button>
+    <button class="chip" id="chip-sabado"    onclick="sendChip('horarios sabado')">Sábado</button>
+    <button class="chip" id="chip-domingo"   onclick="sendChip('horarios domingo')">Domingo</button>
   </div>
 
   <div class="input-area">
-    <input class="chat-input" id="input" type="text" placeholder="Ej: línea 103, parada 2625, ir al aeropuerto…" />
+    <input class="chat-input" id="input" type="text"
+      placeholder="Línea 103 · parada 2625 · ir al aeropuerto…" />
     <button class="send-btn" id="send-btn" onclick="handleSend()">
       <svg viewBox="0 0 24 24" fill="white"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 20-7z"/></svg>
     </button>
   </div>
-</div>
 
+</div>
 <script>
+// ─── Config ───────────────────────────────────────────────────────────────────
 const PROXY = 'https://titsa-proxy-p1z7.vercel.app';
 let OPENAI_KEY = localStorage.getItem('titsa_openai_key') || '';
-let contexto = null; // { tipo: 'linea'|'parada', datos: {...} }
-let historial = [];
+let ctx = null;   // { tipo: 'linea'|'parada', datos: {} }
+let hist = [];    // historial para OpenAI
 
 if (OPENAI_KEY) document.getElementById('config-panel').style.display = 'none';
-document.getElementById('input').addEventListener('keydown', function(e) { if (e.key === 'Enter') handleSend(); });
+document.getElementById('input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
 
-addBotMsg('Hola! Soy el asistente de TITSA.<br>Puedes preguntarme por:<br><strong>• Líneas:</strong> "línea 103", "horarios del 50"<br><strong>• Paradas:</strong> "parada 2625", "qué guaguas paran en 1234"<br><strong>• Rutas:</strong> "cómo ir de La Laguna al aeropuerto"');
+addBot('¡Hola! Soy el asistente de TITSA 🚌<br>' +
+  'Puedes preguntarme:<br>' +
+  '• <strong>Líneas:</strong> "línea 103", "50", "horarios del 52"<br>' +
+  '• <strong>Paradas:</strong> "parada 2625", "2819", "qué guaguas paran en 1234"<br>' +
+  '• <strong>Rutas:</strong> "cómo ir de La Laguna al aeropuerto"');
 
+// ─── API key ──────────────────────────────────────────────────────────────────
 function saveKey() {
-  var val = document.getElementById('apikey-field').value.trim();
-  if (!val.startsWith('sk-')) { alert('La key debe empezar por sk-'); return; }
-  OPENAI_KEY = val;
-  localStorage.setItem('titsa_openai_key', val);
+  const v = document.getElementById('apikey-field').value.trim();
+  if (!v.startsWith('sk-')) { alert('La key debe empezar por sk-'); return; }
+  OPENAI_KEY = v;
+  localStorage.setItem('titsa_openai_key', v);
   document.getElementById('config-panel').style.display = 'none';
 }
 
-function now() {
-  return new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-}
+// ─── UI helpers ───────────────────────────────────────────────────────────────
+function now() { return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
 
-function addBotMsg(html) {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
+function addBot(html) {
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
   el.className = 'msg bot';
-  el.innerHTML = '<div class="bubble">' + html + '</div><span class="msg-time">' + now() + '</span>';
+  el.innerHTML = `<div class="bubble">${html}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function addUserMsg(text) {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
+function addUser(text) {
+  const chat = document.getElementById('chat');
+  const el = document.createElement('div');
   el.className = 'msg user';
-  el.innerHTML = '<div class="bubble">' + text + '</div><span class="msg-time">' + now() + '</span>';
+  el.innerHTML = `<div class="bubble">${text}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el);
   chat.scrollTop = chat.scrollHeight;
 }
 
-function showTyping() {
-  var chat = document.getElementById('chat');
-  var el = document.createElement('div');
-  el.id = 'typing'; el.className = 'msg bot';
-  el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
-  chat.appendChild(el);
-  chat.scrollTop = chat.scrollHeight;
+function typing(show) {
+  const t = document.getElementById('typing');
+  if (show) {
+    if (t) return;
+    const chat = document.getElementById('chat');
+    const el = document.createElement('div');
+    el.id = 'typing'; el.className = 'msg bot';
+    el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
+    chat.appendChild(el);
+    chat.scrollTop = chat.scrollHeight;
+  } else {
+    if (t) t.remove();
+  }
 }
 
-function removeTyping() { var t = document.getElementById('typing'); if (t) t.remove(); }
-
-function setLoading(on) {
+function loading(on) {
   document.getElementById('input').disabled = on;
   document.getElementById('send-btn').disabled = on;
 }
 
-function setContexto(tipo, datos, label) {
-  contexto = { tipo, datos };
-  document.getElementById('context-texto').textContent = label;
-  document.getElementById('context-banner').style.display = 'flex';
+function setCtx(tipo, datos, label) {
+  ctx = { tipo, datos };
+  hist = [];
+  document.getElementById('ctx-texto').textContent = label;
+  document.getElementById('ctx-banner').style.display = 'flex';
+  // Mostrar chips según tipo
   document.getElementById('chips').style.display = 'flex';
+  const esLinea = tipo === 'linea';
+  document.getElementById('chip-horarios').style.display = esLinea ? '' : 'none';
+  document.getElementById('chip-paradas').style.display  = esLinea ? '' : 'none';
+  document.getElementById('chip-sabado').style.display   = esLinea ? '' : 'none';
+  document.getElementById('chip-domingo').style.display  = esLinea ? '' : 'none';
 }
 
-function resetContexto() {
-  contexto = null;
-  historial = [];
-  document.getElementById('context-banner').style.display = 'none';
+function resetCtx() {
+  ctx = null; hist = [];
+  document.getElementById('ctx-banner').style.display = 'none';
   document.getElementById('chips').style.display = 'none';
-  addBotMsg('Contexto borrado. ¿Sobre qué línea o parada quieres consultar?');
+  addBot('Contexto borrado. ¿Qué línea, parada o ruta quieres consultar?');
 }
 
-// ── Detectores ────────────────────────────────────────────────────────────
+// ─── Detección de intención ───────────────────────────────────────────────────
 
-function detectarNumeroLinea(texto) {
-  // Números de 4+ dígitos NUNCA son líneas, son paradas
-  if (/\b\d{4,}\b/.test(texto)) return null;
-  var m = texto.match(/l[ií]nea\s+0*(\d{1,3})/i) ||
-          texto.match(/(?:horarios?|recorrido)\s+(?:de(?:l|la)?\s+)?(?:la\s+)?(?:l[ií]nea\s+)?0*(\d{1,3})/i) ||
-          texto.match(/^0*(\d{1,3})$/);
-  return m ? m[1] : null;
-}
+// Detecta número de LÍNEA (1-3 dígitos)
+// Excluye si hay números de 4+ dígitos en el mismo mensaje (eso sería parada)
+function detectaLinea(t) {
+  const txt = t.toLowerCase();
+  // Si hay un número de 4+ dígitos en el texto, es consulta de parada
+  if (/\b\d{4,}\b/.test(txt)) return null;
 
-function detectarNumeroParada(texto) {
-  var m = texto.match(/parada\s+(\d{3,5})/i) ||
-          texto.match(/stop\s+(\d{3,5})/i) ||
-          texto.match(/(?:estoy en|en la|la parada)\s+(\d{3,5})/i);
+  // Patrones explícitos
+  let m = txt.match(/l[ií]nea\s+0*(\d{1,3})\b/);
   if (m) return m[1];
-  // Cualquier número de 4-5 dígitos suelto = parada
-  m = texto.match(/\b(\d{4,5})\b/);
+  m = txt.match(/(?:horarios?|paradas?|recorrido)\s+(?:de(?:l|la)?\s+)?(?:l[ií]nea\s+)?0*(\d{1,3})\b/);
+  if (m) return m[1];
+  m = txt.match(/(?:la\s+|el\s+)?0*(\d{1,3})\s*(?:$|[,?])/);
+  if (m) return m[1];
+  // Número solo en el mensaje
+  m = txt.match(/^0*(\d{1,3})$/);
   if (m) return m[1];
   return null;
 }
 
-function esConsultaRuta(texto) {
-  return /c[oó]mo\s+(?:ir|llegar|voy|viajar)|qu[eé]\s+(?:guagua|l[ií]nea|autob[uú]s)\s+(?:tengo\s+que\s+coger|coger|tomo|va|lleva)|(?:ir|llegar|voy)\s+(?:desde|de)\s+\w+\s+(?:hasta|a)\s+\w+|(?:desde|de)\s+.+\s+(?:hasta|a)\s+/i.test(texto);
+// Detecta número de PARADA (4-5 dígitos o precedido de "parada"/"stop")
+function detectaParada(t) {
+  const txt = t.toLowerCase();
+  let m = txt.match(/(?:parada|stop)\s+(\d{3,5})\b/);
+  if (m) return m[1];
+  m = txt.match(/(?:estoy en|en la|en)\s+(?:la\s+)?(?:parada\s+)?(\d{4,5})\b/);
+  if (m) return m[1];
+  m = txt.match(/\b(\d{4,5})\b/);
+  if (m) return m[1];
+  return null;
 }
 
-// ── Llamadas al proxy ─────────────────────────────────────────────────────
+// Detecta si es consulta de ruta/viaje
+function detectaRuta(t) {
+  return /c[oó]mo\s+(ir|llegar|voy|viajar)|qu[eé]\s+(guagua|l[ií]nea)\s+(tengo|coger|tomo|va|lleva)|(?:ir|llegar|voy)\s+(?:desde|de)|(?:desde|de)\s+.+\s+(?:hasta|a\s+)/i.test(t);
+}
 
-async function fetchLinea(num) {
-  var r = await fetch(PROXY + '/api/titsa?linea=' + num);
+// Detecta si es consulta de horarios (en contexto línea)
+function detectaTipoHorario(t) {
+  const txt = t.toLowerCase();
+  if (/s[aá]bado/.test(txt))              return 'sabado';
+  if (/domingo|festivo/.test(txt))         return 'domingo';
+  if (/laborable|hoy|semana|diario/.test(txt)) return 'laborable';
+  // Chips directos
+  if (txt.includes('horarios laborable'))  return 'laborable';
+  if (txt.includes('horarios sabado'))     return 'sabado';
+  if (txt.includes('horarios domingo'))    return 'domingo';
+  return null;
+}
+
+// Detecta si pide paradas del recorrido
+function detectaPideParadas(t) {
+  const txt = t.toLowerCase();
+  return /paradas?|recorrido|recorrid|paradas del|todas las paradas/.test(txt);
+}
+
+// Extrae origen y destino de una frase de ruta
+function extraeRuta(t) {
+  let m = t.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|a|al|hacia)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[1].trim(), destino: m[2].trim() };
+  m = t.match(/(?:ir|llegar|viajar)\s+(?:al?|hasta)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
+  if (m) return { origen: (m[2]||'').trim(), destino: m[1].trim() };
+  // "cómo ir al aeropuerto desde la laguna"
+  m = t.match(/(?:cómo|como)\s+(?:ir|llegar)\s+(?:al?|hasta)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
+  if (m) return { origen: (m[2]||'').trim(), destino: m[1].trim() };
+  return null;
+}
+
+// ─── Llamadas al proxy ────────────────────────────────────────────────────────
+async function apiLinea(num) {
+  const r = await fetch(`${PROXY}/api/titsa?linea=${num}`);
+  return r.json();
+}
+async function apiParada(id) {
+  const r = await fetch(`${PROXY}/api/titsa?parada=${id}`);
+  return r.json();
+}
+async function apiRuta(origen, destino) {
+  const r = await fetch(`${PROXY}/api/titsa?origen=${encodeURIComponent(origen)}&destino=${encodeURIComponent(destino)}`);
   return r.json();
 }
 
-async function fetchParada(id) {
-  var r = await fetch(PROXY + '/api/titsa?parada=' + id);
-  return r.json();
+// ─── Formateadores ────────────────────────────────────────────────────────────
+
+function fmtParadas(datos) {
+  // datos = info de línea completa
+  const sentidos = datos.sentidos || [];
+  if (!sentidos.length) return 'No hay datos de recorrido para esta línea.';
+
+  let html = `<strong>Línea ${datos.num} — Paradas del recorrido</strong>`;
+
+  sentidos.forEach((s, si) => {
+    const recorrido = s.recorrido || [];
+    html += `<br><br><strong>Sentido ${si+1}: ${s.origen} → ${s.destino}</strong><br>`;
+    html += `<small style="color:var(--texto-suave)">${recorrido.length} paradas</small>`;
+    recorrido.forEach((p, i) => {
+      html += `<div class="parada-item">
+        <span class="parada-num">${i+1}.</span>
+        <span class="parada-id">${p.id}</span>
+        ${p.nombre}
+      </div>`;
+    });
+  });
+  return html;
 }
 
-async function fetchRuta(origen, destino) {
-  var r = await fetch(PROXY + '/api/titsa?origen=' + encodeURIComponent(origen) + '&destino=' + encodeURIComponent(destino));
-  return r.json();
-}
+function fmtHorarios(datos, tipo) {
+  const sentidos = datos.sentidos || [];
+  if (!sentidos.length) return 'No hay datos de horarios.';
 
-// ── Formatear respuestas SIN IA ───────────────────────────────────────────
+  const nombreTipo = tipo === 'sabado' ? 'Sábado' : tipo === 'domingo' ? 'Domingo' : 'Laborable';
+  let html = `<strong>Línea ${datos.num} — Horarios ${nombreTipo}</strong>`;
 
-function formatHorarios(datos, tipo, sentidosFiltrados) {
-  var sentidos = sentidosFiltrados || datos.sentidos || [];
-  if (!sentidos.length) return 'No hay datos de horarios para esta línea.';
+  // Tabla con columna por sentido
+  const columnas = sentidos.map(s => s.horarios?.[tipo] || []);
+  const maxFilas = Math.max(...columnas.map(c => c.length), 0);
 
-  var html = '<strong>Línea ' + datos.num + ' — Horarios ' + tipo + '</strong>';
+  if (maxFilas === 0) return html + `<br><br>No hay horarios de ${nombreTipo} para esta línea.`;
+
   html += '<table><tr>';
-  sentidos.forEach(function(s) {
-    var horas = s.horarios[tipo] || [];
-    html += '<th>' + s.origen + ' → ' + s.destino + '<br><small>' + horas.length + ' salidas</small></th>';
+  sentidos.forEach((s, i) => {
+    const n = columnas[i].length;
+    html += `<th>${s.origen}<br><small>(${n} salidas)</small></th>`;
   });
   html += '</tr>';
 
-  var columnas = sentidos.map(function(s) { return s.horarios[tipo] || []; });
-  var maxFilas = Math.max.apply(null, columnas.map(function(c){ return c.length; }));
-
-  for (var i = 0; i < maxFilas; i++) {
+  for (let i = 0; i < maxFilas; i++) {
     html += '<tr>';
-    columnas.forEach(function(col) {
-      html += '<td>' + (col[i] || '') + '</td>';
+    columnas.forEach(col => {
+      html += `<td>${col[i] || ''}</td>`;
     });
     html += '</tr>';
   }
@@ -259,291 +525,198 @@ function formatHorarios(datos, tipo, sentidosFiltrados) {
   return html;
 }
 
-function formatLinea(datos, pregunta) {
-  var p = (pregunta || '').toLowerCase();
-  var sentidos = datos.sentidos || [];
-  var html = '<strong>Línea ' + datos.num + ' — ' + datos.nombre + '</strong><br><br>';
-
-  // Paradas del recorrido
-  if (p.includes('parada') || p.includes('recorrido')) {
-    sentidos.forEach(function(s, si) {
-      html += '<strong>Sentido ' + (si+1) + ': → ' + s.destino + '</strong><br>';
-      html += '<strong>(' + s.recorrido.length + ' paradas desde ' + s.origen + ')</strong><br>';
-      s.recorrido.forEach(function(par, i) {
-        html += '<div class="parada-item"><span class="parada-id">' + par.id + '</span> ' + (i+1) + '. ' + par.nombre + '</div>';
-      });
-      html += '<br>';
-    });
-    return html;
-  }
-
-  // Horarios: tabla con columna por sentido
-  var tipo = 'laborable';
-  if (p.includes('sábado') || p.includes('sabado')) tipo = 'sabado';
-  else if (p.includes('domingo') || p.includes('festivo')) tipo = 'domingo';
-
-  if (!sentidos.length) return html + 'No hay datos de horarios.';
-
-  // Cabecera con nombre de origen de cada sentido
-  html += '<table><tr>';
-  sentidos.forEach(function(s) {
-    var horas = s.horarios[tipo] || [];
-    html += '<th>' + s.origen + '<br><small>(' + horas.length + ' salidas)</small></th>';
+function fmtLineaResumen(datos) {
+  const sentidos = datos.sentidos || [];
+  let html = `<strong>Línea ${datos.num} — ${datos.nombre}</strong><br><br>`;
+  sentidos.forEach(s => {
+    const nLab = (s.horarios?.laborable || []).length;
+    const nSab = (s.horarios?.sabado || []).length;
+    const nDom = (s.horarios?.domingo || []).length;
+    const nPar = (s.recorrido || []).length;
+    html += `<strong>→ ${s.origen} a ${s.destino}</strong><br>`;
+    html += `<small style="color:var(--texto-suave)">${nPar} paradas · Lab: ${nLab} salidas · Sáb: ${nSab} · Dom: ${nDom}</small><br><br>`;
   });
-  html += '</tr>';
-
-  // Filas de horas
-  var maxFilas = 0;
-  var columnas = sentidos.map(function(s) {
-    var h = s.horarios[tipo] || [];
-    if (h.length > maxFilas) maxFilas = h.length;
-    return h;
-  });
-
-  for (var i = 0; i < maxFilas; i++) {
-    html += '<tr>';
-    columnas.forEach(function(col) {
-      html += '<td>' + (col[i] || '') + '</td>';
-    });
-    html += '</tr>';
-  }
-  html += '</table>';
-
+  html += '¿Qué quieres consultar?<br>';
+  html += '• <strong>Horarios</strong> (laborable / sábado / domingo)<br>';
+  html += '• <strong>Paradas</strong> del recorrido completo';
   return html;
 }
 
-function formatParada(datos) {
-  var html = '<strong>Parada ' + datos.id + ' — ' + datos.nombre + '</strong><br><br>';
-  if (!datos.lineas || !datos.lineas.length) {
-    return html + 'No se encontraron líneas para esta parada.';
-  }
-  html += '<strong>Líneas que paran aquí (' + datos.lineas.length + '):</strong><br>';
-  datos.lineas.forEach(function(l) {
-    html += '<div class="parada-item"><span class="parada-id">' + l.num + '</span> ' + l.nombre + '</div>';
+function fmtParadaLineas(datos) {
+  let html = `<strong>Parada ${datos.id} — ${datos.nombre}</strong><br><br>`;
+  const lineas = datos.lineas || [];
+  if (!lineas.length) return html + 'No hay líneas registradas para esta parada.';
+  html += `<strong>Líneas que paran aquí (${lineas.length}):</strong><br>`;
+  lineas.forEach(l => {
+    html += `<div class="parada-item"><span class="parada-id">${l.num}</span> ${l.nombre}</div>`;
   });
+  html += '<br><small style="color:var(--texto-suave)">Di el número de línea para ver sus horarios o cómo llegar a algún sitio.</small>';
   return html;
 }
 
-function formatRuta(datos) {
-  var html = '';
+function fmtRuta(datos, ori, dst) {
+  if (datos.error) {
+    return `${datos.error}<br><br><small>Prueba con nombres más cortos: "laguna", "aeropuerto", "santa cruz", "puerto cruz".</small>`;
+  }
+
+  const oriNombres = (datos.origen || []).map(p => p.nombre).slice(0, 3).join(', ');
+  const dstNombres = (datos.destino || []).map(p => p.nombre).slice(0, 3).join(', ');
+
+  let html = `<strong>Ruta: ${ori} → ${dst}</strong>`;
+  if (oriNombres) html += `<br><small style="color:var(--texto-suave)">Origen: ${oriNombres}</small>`;
+  if (dstNombres) html += `<br><small style="color:var(--texto-suave)">Destino: ${dstNombres}</small>`;
 
   if (datos.directas && datos.directas.length) {
-    html += '<strong>Líneas directas:</strong><br>';
-    datos.directas.forEach(function(l) {
-      var horas = l.horarios_laborable || [];
-      html += '<div class="parada-item"><span class="parada-id">' + l.num + '</span> ' + l.nombre + '</div>';
-      if (horas.length) {
-        html += '<small>Primeras salidas: ' + horas.slice(0, 5).join(', ') + (horas.length > 5 ? '...' : '') + '</small><br>';
-      }
+    html += `<br><br><strong>✅ Líneas directas (${datos.directas.length}):</strong>`;
+    datos.directas.slice(0, 5).forEach(l => {
+      const h = l.horarios_laborable || [];
+      const primeras = h.slice(0, 5).join(' · ');
+      html += `<div class="ruta-bloque">
+        <div class="ruta-linea"><span class="ruta-badge">${l.num}</span> ${l.nombre}</div>
+        ${primeras ? `<div class="ruta-horarios">Primeras salidas laborable: ${primeras}${h.length > 5 ? '…' : ''}</div>` : ''}
+      </div>`;
     });
   } else if (datos.transbordos && datos.transbordos.length) {
-    html += '<strong>No hay línea directa. Opciones con transbordo:</strong><br><br>';
-    datos.transbordos.forEach(function(t, i) {
-      html += '<strong>Opción ' + (i+1) + ':</strong><br>';
-      html += '<div class="parada-item"><span class="parada-id">' + t.linea1.num + '</span> ' + t.linea1.nombre + '</div>';
-      html += '↓ transbordo en <strong>' + t.transbordo.nombre + '</strong> (parada ' + t.transbordo.id + ')<br>';
-      html += '<div class="parada-item"><span class="parada-id">' + t.linea2.num + '</span> ' + t.linea2.nombre + '</div><br>';
+    html += '<br><br><strong>🔄 No hay línea directa — Rutas con transbordo:</strong>';
+    datos.transbordos.slice(0, 3).forEach((t, i) => {
+      const h1 = (t.linea1.horarios_laborable || []).slice(0, 4).join(' · ');
+      const h2 = (t.linea2.horarios_laborable || []).slice(0, 4).join(' · ');
+      html += `<div class="ruta-bloque">
+        <strong>Opción ${i+1}</strong><br>
+        <div class="ruta-linea"><span class="ruta-badge">${t.linea1.num}</span> ${t.linea1.nombre}</div>
+        ${h1 ? `<div class="ruta-horarios">Salidas: ${h1}…</div>` : ''}
+        <div class="ruta-arrow">↓ <span class="transbordo-tag">TRANSBORDO</span> ${t.transbordo.nombre} <span class="parada-id">${t.transbordo.id}</span></div>
+        <div class="ruta-linea"><span class="ruta-badge">${t.linea2.num}</span> ${t.linea2.nombre}</div>
+        ${h2 ? `<div class="ruta-horarios">Salidas: ${h2}…</div>` : ''}
+      </div>`;
     });
   } else {
-    html += 'No se encontró ninguna ruta directa ni con transbordo entre esos puntos.<br>';
-    html += 'Comprueba los nombres de las paradas en <a href="https://www.titsa.com" target="_blank">titsa.com</a>.';
-  }
-
-  if (datos.origen && datos.origen.length) {
-    html += '<br><small>Paradas de origen encontradas: ' + datos.origen.map(function(p){ return p.nombre + ' (' + p.id + ')'; }).join(', ') + '</small>';
-  }
-  if (datos.destino && datos.destino.length) {
-    html += '<br><small>Paradas de destino encontradas: ' + datos.destino.map(function(p){ return p.nombre + ' (' + p.id + ')'; }).join(', ') + '</small>';
+    html += '<br><br>No se encontró ninguna ruta directa ni con transbordo entre esos puntos.<br>';
+    html += '<small>Comprueba los nombres en <a href="https://www.titsa.com" target="_blank">titsa.com</a>.</small>';
   }
 
   return html;
 }
 
-// ── Extraer origen/destino para rutas ────────────────────────────────────
-
-function extraerRuta(texto) {
-  var m = texto.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|a|al|hacia)\s+(.+?)(?:\?|$)/i);
-  if (m) return { origen: m[1].trim(), destino: m[2].trim() };
-
-  m = texto.match(/(?:ir|llegar|voy|viajar)\s+(?:al?|hasta)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
-  if (m) return { origen: m[2] ? m[2].trim() : '', destino: m[1].trim() };
-
-  // Intentar con IA si no se puede parsear
-  return null;
-}
-
-// ── Motor principal ───────────────────────────────────────────────────────
-
+// ─── Motor principal ──────────────────────────────────────────────────────────
 async function handleSend() {
-  var input = document.getElementById('input');
-  var text = input.value.trim();
+  const inp = document.getElementById('input');
+  const text = inp.value.trim();
   if (!text) return;
-  input.value = '';
-  await processMessage(text);
+  inp.value = '';
+  await process(text);
 }
 
-async function sendChip(text) { await processMessage(text); }
+async function sendChip(text) { await process(text); }
 
-async function processMessage(text) {
+async function process(text) {
   if (!OPENAI_KEY) {
-    addBotMsg('Introduce tu API Key de OpenAI arriba y pulsa <strong>Guardar</strong>.');
+    addBot('Introduce tu API Key de OpenAI arriba y pulsa <strong>Guardar</strong>.');
     return;
   }
-
-  addUserMsg(text);
-  setLoading(true);
-  showTyping();
+  addUser(text);
+  loading(true);
+  typing(true);
 
   try {
-    // 1. ¿Número de línea?
-    var numLinea = detectarNumeroLinea(text);
+
+    // ── A. ¿Pide paradas del recorrido? (chip o texto)
+    if (detectaPideParadas(text)) {
+      if (ctx && ctx.tipo === 'linea') {
+        typing(false);
+        addBot(fmtParadas(ctx.datos));
+        loading(false);
+        return;
+      }
+      // Puede que también haya número de línea en el texto
+    }
+
+    // ── B. ¿Número de línea?
+    const numLinea = detectaLinea(text);
     if (numLinea) {
-      var datos = await fetchLinea(numLinea);
-      if (datos.error) {
-        removeTyping();
-        addBotMsg('No encontré la línea <strong>' + numLinea + '</strong> en TITSA.');
-        setLoading(false);
-        return;
+      const d = await apiLinea(numLinea);
+      typing(false);
+      if (d.error) {
+        addBot(`No encontré la línea <strong>${numLinea}</strong> en los datos de TITSA.`);
+      } else {
+        // Comprobar si ya pide horarios o paradas directamente
+        const tipoH = detectaTipoHorario(text);
+        const pideParadasTambien = detectaPideParadas(text);
+        setCtx('linea', d, `Línea ${d.num} — ${d.nombre}`);
+        if (pideParadasTambien) {
+          addBot(fmtParadas(d));
+        } else if (tipoH) {
+          addBot(fmtHorarios(d, tipoH));
+        } else {
+          addBot(fmtLineaResumen(d));
+        }
       }
-      setContexto('linea', datos, 'Línea ' + datos.num + ' — ' + datos.nombre);
-      historial = [];
-      removeTyping();
-      var sentidos = datos.sentidos || [];
-      var resumen = sentidos.map(function(s) {
-        return s.origen + ' → ' + s.destino;
-      }).join('<br>');
-      addBotMsg('<strong>Línea ' + datos.num + ' — ' + datos.nombre + '</strong><br><br>' +
-        resumen + '<br><br>' +
-        '¿Qué quieres saber?<br>• <strong>Horarios</strong> (laborable)<br>• <strong>Horarios del sábado</strong> o <strong>domingo</strong><br>• <strong>Paradas</strong> del recorrido completo');
-      setLoading(false);
+      loading(false);
       return;
     }
 
-    // 2. ¿Número de parada?
-    var numParada = detectarNumeroParada(text);
+    // ── C. ¿Número de parada?
+    const numParada = detectaParada(text);
     if (numParada) {
-      var datosP = await fetchParada(numParada);
-      if (datosP.error) {
-        removeTyping();
-        addBotMsg('No encontré la parada <strong>' + numParada + '</strong>.');
-        setLoading(false);
-        return;
+      const d = await apiParada(numParada);
+      typing(false);
+      if (d.error) {
+        addBot(`No encontré la parada <strong>${numParada}</strong> en los datos de TITSA.`);
+      } else {
+        setCtx('parada', d, `Parada ${d.id} — ${d.nombre}`);
+        addBot(fmtParadaLineas(d));
       }
-      setContexto('parada', datosP, 'Parada ' + datosP.id + ' — ' + datosP.nombre);
-      historial = [];
-      removeTyping();
-      addBotMsg(formatParada(datosP));
-      setLoading(false);
+      loading(false);
       return;
     }
 
-    // 3. ¿Consulta de ruta?
-    if (esConsultaRuta(text)) {
-      var ruta = extraerRuta(text);
-      if (ruta && ruta.origen && ruta.destino) {
-        var datosR = await fetchRuta(ruta.origen, ruta.destino);
-        removeTyping();
-        addBotMsg(formatRuta(datosR));
-        setLoading(false);
-        return;
+    // ── D. ¿Consulta de ruta?
+    if (detectaRuta(text)) {
+      const ruta = extraeRuta(text);
+      typing(false);
+      if (!ruta || !ruta.destino) {
+        addBot('Para buscar una ruta dime el origen y el destino.<br>Ejemplo: <strong>"cómo ir de La Laguna al aeropuerto"</strong>');
+      } else if (!ruta.origen) {
+        addBot(`¿Desde dónde quieres ir a <strong>${ruta.destino}</strong>? Dime la parada o zona de origen.`);
+      } else {
+        const d = await apiRuta(ruta.origen, ruta.destino);
+        addBot(fmtRuta(d, ruta.origen, ruta.destino));
       }
-      // Si no se pudo extraer origen/destino, pedir aclaración
-      removeTyping();
-      addBotMsg('Para buscar una ruta dime el origen y el destino. Por ejemplo:<br><strong>"cómo ir de La Laguna al aeropuerto"</strong>');
-      setLoading(false);
+      loading(false);
       return;
     }
 
-    // 4. Si hay contexto activo, responder con tabla directamente sin IA
-    if (contexto && contexto.tipo === 'linea') {
-      var p2 = text.toLowerCase();
-      var tipo = 'laborable';
-      if (p2.includes('sábado') || p2.includes('sabado')) tipo = 'sabado';
-      else if (p2.includes('domingo') || p2.includes('festivo')) tipo = 'domingo';
-
-      // Filtrar sentido si se menciona
-      var sentidos = contexto.datos.sentidos || [];
-      var sentidosFiltrados = sentidos;
-      if (p2.includes('laguna') || p2.includes('santa cruz') || p2.includes('intercambiador')) {
-        var filtrado = sentidos.filter(function(s) {
-          return s.destino.toLowerCase().includes('laguna') ||
-                 s.destino.toLowerCase().includes('santa cruz') ||
-                 s.origen.toLowerCase().includes('laguna') && p2.includes('laguna');
-        });
-        if (filtrado.length) sentidosFiltrados = filtrado;
-      } else if (p2.includes('destino') || p2.includes('hacia') || p2.includes('a ')) {
-        // intentar filtrar por destino mencionado
-        var palabras = p2.split(/\s+/);
-        var filtrado2 = sentidos.filter(function(s) {
-          return palabras.some(function(w) {
-            return w.length > 3 && (s.destino.toLowerCase().includes(w) || s.origen.toLowerCase().includes(w));
-          });
-        });
-        if (filtrado2.length) sentidosFiltrados = filtrado2;
-      }
-
-      removeTyping();
-      addBotMsg(formatHorarios(contexto.datos, tipo, sentidosFiltrados));
-      setLoading(false);
+    // ── E. Con contexto activo, responder con datos
+    if (ctx && ctx.tipo === 'linea') {
+      const tipoH = detectaTipoHorario(text) || 'laborable';
+      typing(false);
+      addBot(fmtHorarios(ctx.datos, tipoH));
+      loading(false);
       return;
     }
 
-    if (contexto && contexto.tipo === 'parada') {
-      removeTyping();
-      addBotMsg(formatParada(contexto.datos));
-      setLoading(false);
+    if (ctx && ctx.tipo === 'parada') {
+      typing(false);
+      addBot(fmtParadaLineas(ctx.datos));
+      loading(false);
       return;
     }
 
-    // 5. Sin contexto, pedir aclaración
-    removeTyping();
-    addBotMsg('Dime el número de línea, el número de parada, o pregúntame cómo ir de un sitio a otro.<br><br>Ejemplos:<br>• <strong>línea 103</strong><br>• <strong>parada 2625</strong><br>• <strong>cómo ir de La Laguna al Puerto de la Cruz</strong>');
-    setLoading(false);
+    // ── F. Sin contexto y sin detectar nada claro
+    typing(false);
+    addBot(
+      'No he entendido bien la consulta. Puedes preguntarme:<br>' +
+      '• <strong>Número de línea:</strong> "línea 103" o solo "103"<br>' +
+      '• <strong>Número de parada:</strong> "parada 2625" o solo "2625"<br>' +
+      '• <strong>Ruta:</strong> "cómo ir de La Laguna al aeropuerto"'
+    );
+    loading(false);
 
   } catch(e) {
-    removeTyping();
-    addBotMsg('Error de conexión: ' + e.message);
-    setLoading(false);
+    typing(false);
+    addBot('Error de conexión: ' + e.message);
+    loading(false);
   }
-}
-
-// ── OpenAI solo para preguntas de seguimiento con contexto ───────────────
-
-async function llamarOpenAI(pregunta) {
-  var ctx = '';
-  if (contexto && contexto.tipo === 'linea') {
-    var d = contexto.datos;
-    var sentidos = d.sentidos || [];
-    ctx = 'LINEA ' + d.num + ': ' + d.nombre + '\n';
-    sentidos.forEach(function(s) {
-      ctx += '\nSENTIDO: ' + s.origen + ' -> ' + s.destino + '\n';
-      ctx += 'PARADAS: ' + s.recorrido.map(function(p,i){ return (i+1)+'. ['+p.id+'] '+p.nombre; }).join(', ') + '\n';
-      ctx += 'HORARIOS LABORABLE: ' + (s.horarios.laborable||[]).join(', ') + '\n';
-      ctx += 'HORARIOS SABADO: ' + (s.horarios.sabado||[]).join(', ') + '\n';
-      ctx += 'HORARIOS DOMINGO: ' + (s.horarios.domingo||[]).join(', ') + '\n';
-    });
-  } else if (contexto && contexto.tipo === 'parada') {
-    var dp = contexto.datos;
-    ctx = 'PARADA ' + dp.id + ': ' + dp.nombre + '\nLINEAS: ' + dp.lineas.map(function(l){ return l.num + ' (' + l.nombre + ')'; }).join(', ');
-  }
-
-  var sistema = 'Eres el asistente de TITSA (Transportes Interurbanos de Tenerife). ' +
-    'Responde en español, de forma breve y clara. Usa solo <strong> y <br> para formatear, nunca asteriscos ni almohadillas. ' +
-    'USA EXCLUSIVAMENTE los datos que te proporciono. NUNCA inventes horarios, paradas ni líneas.\n\n' + ctx;
-
-  var res = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + OPENAI_KEY },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      max_tokens: 400,
-      messages: [{ role: 'system', content: sistema }].concat(historial)
-    })
-  });
-
-  if (!res.ok) { var e = await res.json(); throw new Error(e.error ? e.error.message : res.statusText); }
-  var data = await res.json();
-  return data.choices[0].message.content;
 }
 </script>
 </body>
