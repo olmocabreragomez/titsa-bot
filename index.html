@@ -233,6 +233,32 @@ async function fetchRuta(origen, destino) {
 
 // ── Formatear respuestas SIN IA ───────────────────────────────────────────
 
+function formatHorarios(datos, tipo, sentidosFiltrados) {
+  var sentidos = sentidosFiltrados || datos.sentidos || [];
+  if (!sentidos.length) return 'No hay datos de horarios para esta línea.';
+
+  var html = '<strong>Línea ' + datos.num + ' — Horarios ' + tipo + '</strong>';
+  html += '<table><tr>';
+  sentidos.forEach(function(s) {
+    var horas = s.horarios[tipo] || [];
+    html += '<th>' + s.origen + ' → ' + s.destino + '<br><small>' + horas.length + ' salidas</small></th>';
+  });
+  html += '</tr>';
+
+  var columnas = sentidos.map(function(s) { return s.horarios[tipo] || []; });
+  var maxFilas = Math.max.apply(null, columnas.map(function(c){ return c.length; }));
+
+  for (var i = 0; i < maxFilas; i++) {
+    html += '<tr>';
+    columnas.forEach(function(col) {
+      html += '<td>' + (col[i] || '') + '</td>';
+    });
+    html += '</tr>';
+  }
+  html += '</table>';
+  return html;
+}
+
 function formatLinea(datos, pregunta) {
   var p = (pregunta || '').toLowerCase();
   var sentidos = datos.sentidos || [];
@@ -428,13 +454,43 @@ async function processMessage(text) {
       return;
     }
 
-    // 4. Si hay contexto activo, preguntas de seguimiento con IA
-    if (contexto) {
-      historial.push({ role: 'user', content: text });
-      var respuesta = await llamarOpenAI(text);
+    // 4. Si hay contexto activo, responder con tabla directamente sin IA
+    if (contexto && contexto.tipo === 'linea') {
+      var p2 = text.toLowerCase();
+      var tipo = 'laborable';
+      if (p2.includes('sábado') || p2.includes('sabado')) tipo = 'sabado';
+      else if (p2.includes('domingo') || p2.includes('festivo')) tipo = 'domingo';
+
+      // Filtrar sentido si se menciona
+      var sentidos = contexto.datos.sentidos || [];
+      var sentidosFiltrados = sentidos;
+      if (p2.includes('laguna') || p2.includes('santa cruz') || p2.includes('intercambiador')) {
+        var filtrado = sentidos.filter(function(s) {
+          return s.destino.toLowerCase().includes('laguna') ||
+                 s.destino.toLowerCase().includes('santa cruz') ||
+                 s.origen.toLowerCase().includes('laguna') && p2.includes('laguna');
+        });
+        if (filtrado.length) sentidosFiltrados = filtrado;
+      } else if (p2.includes('destino') || p2.includes('hacia') || p2.includes('a ')) {
+        // intentar filtrar por destino mencionado
+        var palabras = p2.split(/\s+/);
+        var filtrado2 = sentidos.filter(function(s) {
+          return palabras.some(function(w) {
+            return w.length > 3 && (s.destino.toLowerCase().includes(w) || s.origen.toLowerCase().includes(w));
+          });
+        });
+        if (filtrado2.length) sentidosFiltrados = filtrado2;
+      }
+
       removeTyping();
-      addBotMsg(respuesta);
-      historial.push({ role: 'assistant', content: respuesta });
+      addBotMsg(formatHorarios(contexto.datos, tipo, sentidosFiltrados));
+      setLoading(false);
+      return;
+    }
+
+    if (contexto && contexto.tipo === 'parada') {
+      removeTyping();
+      addBotMsg(formatParada(contexto.datos));
       setLoading(false);
       return;
     }
