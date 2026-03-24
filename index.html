@@ -373,11 +373,22 @@ async function process(text) {
 
   if (detectaRuta(text)) {
     let origen='', destino='';
-    let m = text.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|al?|hacia)\s+(.+?)(?:\?|$)/i);
+    let m = text.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|al?|hacia|a)\s+(.+?)(?:\?|$)/i);
     if (m) { origen=m[1].trim(); destino=m[2].trim(); }
     else {
-      m = text.match(/(?:cómo|como)\s+(?:ir|llegar|voy)\s+(?:al?|hasta|a)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
+      // "como llego a X desde Y" o "como llego a X"
+      m = text.match(/(?:cómo|como)\s+(?:ir|llegar|voy|puedo\s+ir|puedo\s+llegar)\s+(?:al?|hasta|a)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
       if (m) { destino=m[1].trim(); origen=(m[2]||'').trim(); }
+      else {
+        // "llego a X desde Y" o "voy a X desde Y"
+        m = text.match(/(?:llego|voy|quiero\s+ir|necesito\s+ir|quiero\s+llegar)\s+(?:al?|a)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
+        if (m) { destino=m[1].trim(); origen=m[2].trim(); }
+        else {
+          // "de X a Y" sin palabras previas
+          m = text.match(/^(?:de|desde)\s+(.+?)\s+(?:al?|a|hasta)\s+(.+?)(?:\?|$)/i);
+          if (m) { origen=m[1].trim(); destino=m[2].trim(); }
+        }
+      }
     }
     hideTyping();
     if (!destino) addBot('Dime origen y destino. Ej: <strong>"cómo ir de La Laguna al aeropuerto"</strong>');
