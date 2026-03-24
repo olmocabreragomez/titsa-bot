@@ -24,8 +24,7 @@
     .chat { flex: 1; overflow-y: auto; background: var(--fondo); padding: 14px 11px; display: flex; flex-direction: column; gap: 11px; scroll-behavior: smooth; }
     .msg { display: flex; flex-direction: column; gap: 3px; max-width: 93%; animation: fadeUp 0.18s ease; }
     @keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-    .msg.bot { align-self: flex-start; }
-    .msg.user { align-self: flex-end; }
+    .msg.bot { align-self: flex-start; } .msg.user { align-self: flex-end; }
     .bot .bubble { background: var(--blanco); border: 1px solid var(--borde); color: var(--texto); border-radius: 3px 16px 16px 16px; padding: 10px 13px; font-size: 13px; line-height: 1.6; }
     .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 3px 16px 16px; padding: 10px 13px; font-size: 13px; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
@@ -45,13 +44,11 @@
     .chat-input:focus { border-color: var(--verde); }
     .chat-input:disabled { opacity: 0.5; }
     .send-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--verde); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-    .send-btn:hover { opacity: 0.82; }
-    .send-btn:disabled { opacity: 0.38; cursor: default; }
+    .send-btn:hover { opacity: 0.82; } .send-btn:disabled { opacity: 0.38; cursor: default; }
     .send-btn svg { width: 14px; height: 14px; }
     .typing-indicator { display: flex; align-items: center; gap: 4px; padding: 10px 13px; background: var(--blanco); border: 1px solid var(--borde); border-radius: 3px 16px 16px 16px; width: fit-content; }
     .dot { width: 6px; height: 6px; border-radius: 50%; background: #bbb; animation: bounce 1.2s infinite; }
-    .dot:nth-child(2) { animation-delay: 0.2s; }
-    .dot:nth-child(3) { animation-delay: 0.4s; }
+    .dot:nth-child(2) { animation-delay: 0.2s; } .dot:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-5px); } }
     #loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 999; color: #fff; font-size: 14px; flex-direction: column; gap: 10px; }
     .spinner { width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -94,22 +91,33 @@
 const DATA_URL = 'data/titsa_completo.json';
 let DB = null, ctx = null;
 
+// Aliases: variantes de nombres -> IDs de paradas principales
 const ALIASES = {
-  'santa cruz': ['9181','9450'], 'intercambiador santa cruz': ['9181','9450'],
-  'laguna': ['2625','2830'], 'la laguna': ['2625','2830'], 'intercambiador laguna': ['2625','2830'],
-  'aeropuerto norte': ['4537'], 'aeropuerto tfn': ['4537'], 'los rodeos': ['4537'],
-  'aeropuerto sur': ['7571','8326'], 'aeropuerto tfs': ['7571','8326'], 'reina sofia': ['7571'],
+  'santa cruz': ['9181','9450'], 'santacruz': ['9181','9450'],
+  'intercambiador santa cruz': ['9181','9450'], 'intercambiador de santa cruz': ['9181','9450'],
+  'laguna': ['2625','2830'], 'la laguna': ['2625','2830'],
+  'intercambiador laguna': ['2625','2830'], 'intercambiador de laguna': ['2625','2830'],
+  'aeropuerto norte': ['4537'], 'aeropuerto tfn': ['4537'], 'los rodeos': ['4537'], 'tfn': ['4537'],
+  'aeropuerto sur': ['7571','8326'], 'aeropuerto tfs': ['7571','8326'], 'reina sofia': ['7571'], 'tfs': ['7571','8326'],
   'aeropuerto': ['4537','7571','8326'],
-  'puerto de la cruz': ['5090','9197'], 'puerto cruz': ['5090'],
-  'los cristianos': ['7140','8184'], 'costa adeje': ['7142'], 'adeje': ['7142'],
+  'puerto de la cruz': ['5090','9197'], 'puerto cruz': ['5090'], 'el puerto': ['5090'],
+  'los cristianos': ['7140','8184'], 'cristianos': ['7140','8184'],
+  'costa adeje': ['7142'], 'adeje': ['7142'], 'playa de las americas': ['7142'],
   'icod': ['4358'], 'icod de los vinos': ['4358'],
-  'candelaria': ['1723'], 'hospital candelaria': ['1280','1375'],
+  'candelaria': ['1723'],
   'orotava': ['4009'], 'la orotava': ['4009'],
-  'buenavista': ['9198'], 'masca': ['4553'], 'teide': ['4692'],
-  'punta del hidalgo': ['1327'], 'bajamar': ['1318'],
-  'tacoronte': ['2100'], 'sauzal': ['2140'], 'el sauzal': ['2140'],
+  'buenavista': ['9198'], 'masca': ['4553'],
+  'teide': ['4692'], 'las canadas': ['4692'],
+  'punta del hidalgo': ['1327'], 'hidalgo': ['1327'],
+  'bajamar': ['1318'],
+  'tacoronte': ['2100'],
+  'sauzal': ['2140'], 'el sauzal': ['2140'],
   'los gigantes': ['4651'], 'gigantes': ['4651'],
-  'granadilla': ['3504'], 'san isidro': ['3500'], 'el medano': ['3519'], 'medano': ['3519'],
+  'granadilla': ['3504'], 'san isidro': ['3500'],
+  'el medano': ['3519'], 'medano': ['3519'],
+  'teresitas': ['910'], 'las teresitas': ['910'],
+  'san andres': ['945'],
+  'tegueste': ['1052'],
 };
 
 fetch(DATA_URL)
@@ -130,22 +138,19 @@ document.getElementById('input').addEventListener('keydown', e => { if (e.key ==
 function now() { return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
 function addBot(html) {
   const chat = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = 'msg bot';
+  const el = document.createElement('div'); el.className = 'msg bot';
   el.innerHTML = `<div class="bubble">${html}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
 }
 function addUser(text) {
   const chat = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.className = 'msg user';
+  const el = document.createElement('div'); el.className = 'msg user';
   el.innerHTML = `<div class="bubble">${text}</div><span class="msg-time">${now()}</span>`;
   chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
 }
 function showTyping() {
   const chat = document.getElementById('chat');
-  const el = document.createElement('div');
-  el.id = 'typing'; el.className = 'msg bot';
+  const el = document.createElement('div'); el.id = 'typing'; el.className = 'msg bot';
   el.innerHTML = '<div class="typing-indicator"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>';
   chat.appendChild(el); chat.scrollTop = chat.scrollHeight;
 }
@@ -164,15 +169,16 @@ function resetCtx() {
   addBot('¿Qué línea, parada o ruta consultas?');
 }
 
-function normalizar(s) {
+function norm(s) {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').trim();
 }
 function fmtHora(h) {
-  if (!h) return '-';
+  if (!h) return '';
   const p = h.split(':');
   return `${String(parseInt(p[0])%24).padStart(2,'0')}:${p[1]||'00'}`;
 }
 
+// Detectar número de línea
 function detectaLinea(t) {
   const txt = t.toLowerCase();
   if (/\b\d{4,}\b/.test(txt)) return null;
@@ -181,15 +187,29 @@ function detectaLinea(t) {
   m = txt.match(/\b0*(\d{2,3})\b/); if (m && !txt.includes('parada')) return m[1];
   return null;
 }
+
+// Detectar número de parada
 function detectaParada(t) {
   const txt = t.toLowerCase();
   let m = txt.match(/(?:parada|stop)\s+(\d{3,5})\b/); if (m) return m[1];
   m = txt.match(/\b(\d{4,5})\b/); if (m) return m[1];
   return null;
 }
+
+// Detectar si es consulta de ruta - muy amplio
 function detectaRuta(t) {
-  return /c[oó]mo\s+(ir|llegar|voy)|qu[eé]\s+(guagua|l[ií]nea)\s+(tengo|coger|tomo|va|hay)|(?:ir|llegar)\s+(?:desde|de)|(?:desde|de)\s+.+\s+(?:hasta|a\s+)|para\s+ir\s+a|c[oó]mo\s+llego/i.test(t);
+  const n = norm(t);
+  // Patrones de ruta
+  if (/como\s+(ir|llegar|voy|puedo ir|puedo llegar|llego|me voy|me llego)/.test(n)) return true;
+  if (/que\s+(guagua|linea|bus)\s*(tengo|coger|tomo|va|hay|debo|puedo|cojo)/.test(n)) return true;
+  if (/(desde|de)\s+\w.+\s+(hasta|al?|a)\s+\w/.test(n)) return true;
+  if (/(quiero|necesito|para)\s+(ir|llegar)\s+(al?|a|hasta)/.test(n)) return true;
+  if (/me\s+(lleva|voy|vaya)\s+(al?|a|hasta)/.test(n)) return true;
+  if (/(ir|llegar|viajar)\s+(al?|a|hasta|desde)/.test(n)) return true;
+  if (/ruta\s+(de|desde|para)/.test(n)) return true;
+  return false;
 }
+
 function detectaTipo(t) {
   const txt = t.toLowerCase();
   if (/s[aá]bado/.test(txt)) return 'S';
@@ -197,80 +217,158 @@ function detectaTipo(t) {
   return 'L';
 }
 
+// Buscar paradas por alias o nombre
 function buscarParadas(query) {
-  const q = normalizar(query);
+  const q = norm(query);
+  // 1. Alias (más largo primero)
   const aliasKeys = Object.keys(ALIASES).sort((a,b) => b.length - a.length);
   for (const alias of aliasKeys) {
-    if (q.includes(normalizar(alias))) {
+    if (q.includes(norm(alias))) {
       return ALIASES[alias].map(id => ({ id, ...DB.paradas[id] })).filter(p => p.nombre);
     }
   }
+  // 2. Búsqueda por palabras en DB
   const words = q.split(/\s+/).filter(w => w.length > 2);
+  if (!words.length) return [];
   const res = [];
   for (const [id, p] of Object.entries(DB.paradas)) {
-    const score = words.filter(w => normalizar(p.nombre).includes(w)).length;
+    const nombre = norm(p.nombre);
+    const score = words.filter(w => nombre.includes(w)).length;
     if (score > 0) res.push({ id, ...p, score });
   }
-  return res.sort((a,b) => b.score - a.score).slice(0, 5);
+  return res.sort((a,b) => b.score - a.score).slice(0, 8);
 }
 
-function buscarRuta(origen, destino) {
-  const ori = buscarParadas(origen);
-  const dst = buscarParadas(destino);
-  if (!ori.length || !dst.length) return { error: true, ori, dst };
+// Extraer origen y destino de una frase
+function extraerOD(text) {
+  const t = text;
+  let m;
+  // "de X a Y" / "desde X hasta Y" / "desde X a Y"
+  m = t.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|al?|hacia|a)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[1].trim(), destino: m[2].trim() };
+  // "como ir al X desde Y"
+  m = t.match(/(?:c[oó]mo|como)\s+\w+\s+(?:al?|a|hasta)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[2].trim(), destino: m[1].trim() };
+  // "como ir al X" (sin origen)
+  m = t.match(/(?:c[oó]mo|como)\s+\w+\s+(?:al?|a|hasta)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: '', destino: m[1].trim() };
+  // "quiero ir a X desde Y" / "necesito ir a X"
+  m = t.match(/(?:quiero|necesito|para)\s+(?:ir|llegar)\s+(?:al?|a|hasta)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[2].trim(), destino: m[1].trim() };
+  m = t.match(/(?:quiero|necesito|para)\s+(?:ir|llegar)\s+(?:al?|a|hasta)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: '', destino: m[1].trim() };
+  // "me voy al X desde Y"
+  m = t.match(/(?:me\s+voy|voy)\s+(?:al?|a|hasta)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[2].trim(), destino: m[1].trim() };
+  // "llego a X desde Y"
+  m = t.match(/llego\s+(?:al?|a)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[2].trim(), destino: m[1].trim() };
+  // "estoy en X como voy al Y"
+  m = t.match(/(?:estoy en|salgo de|vengo de)\s+(.+?)\s+(?:c[oó]mo|como)\s+\w+\s+(?:al?|a|hasta)\s+(.+?)(?:\?|$)/i);
+  if (m) return { origen: m[1].trim(), destino: m[2].trim() };
+  return { origen: '', destino: '' };
+}
 
-  const lineasOri = new Set(ori.flatMap(p => p.lineas||[]));
-  const lineasDst = new Set(dst.flatMap(p => p.lineas||[]));
+// BFS para encontrar ruta con transbordos
+function buscarRuta(origen, destino) {
+  const paradasOri = buscarParadas(origen);
+  const paradasDst = buscarParadas(destino);
+
+  if (!paradasOri.length || !paradasDst.length) {
+    return { error: true, paradasOri, paradasDst };
+  }
+
+  const oriNombre = paradasOri[0].nombre;
+  const dstNombre = paradasDst[0].nombre;
+  const lineasOri = new Set(paradasOri.flatMap(p => p.lineas||[]));
+  const lineasDst = new Set(paradasDst.flatMap(p => p.lineas||[]));
+
+  // Líneas directas
   const directas = [...lineasOri].filter(l => lineasDst.has(l))
     .map(num => ({ num, ...DB.lineas[num] })).filter(l => l.nombre);
+  if (directas.length) return { tipo:'directa', oriNombre, dstNombre, lineas: directas };
 
-  if (directas.length) return { tipo:'directa', oriNombre: ori[0].nombre, dstNombre: dst[0].nombre, lineas: directas };
+  // BFS con hasta 2 transbordos
+  // Nodo: { lineasActuales, camino: [{linea, paradaTransbordo}] }
+  const resultados = [];
+  const visto = new Set();
 
-  // Transbordos
-  const transbordos = [], visto = new Set();
+  // Para cada linea de origen, BFS buscando lineas de destino
   for (const n1 of lineasOri) {
     const l1 = DB.lineas[n1]; if (!l1) continue;
-    const pl1 = new Set(l1.paradas.map(p => p.id));
+    const paradasL1 = new Set(l1.paradas.map(p => p.id));
+
+    // 1 transbordo
     for (const n2 of lineasDst) {
       if (n1 === n2) continue;
-      const key = `${n1}-${n2}`; if (visto.has(key)) continue; visto.add(key);
+      const key = `${n1}|${n2}`; if (visto.has(key)) continue; visto.add(key);
       const l2 = DB.lineas[n2]; if (!l2) continue;
-      const comun = l2.paradas.find(p => pl1.has(p.id));
+      const comun = l2.paradas.find(p => paradasL1.has(p.id));
       if (comun) {
-        transbordos.push({ linea1:{num:n1,...l1}, linea2:{num:n2,...l2}, transbordo:comun });
-        if (transbordos.length >= 3) break;
+        resultados.push({
+          pasos: [
+            { num: n1, nombre: l1.nombre, horarios: l1.horarios },
+            { num: n2, nombre: l2.nombre, horarios: l2.horarios }
+          ],
+          transbordos: [{ id: comun.id, nombre: comun.nombre }]
+        });
+        if (resultados.length >= 3) break;
       }
     }
-    if (transbordos.length >= 3) break;
+    if (resultados.length >= 3) break;
+
+    // 2 transbordos si no hay con 1
+    if (resultados.length === 0) {
+      for (const [nMid, lMid] of Object.entries(DB.lineas)) {
+        if (nMid === n1 || !lMid) continue;
+        const paradasMid = new Set(lMid.paradas.map(p => p.id));
+        const comunOM = lMid.paradas.find(p => paradasL1.has(p.id));
+        if (!comunOM) continue;
+        for (const n2 of lineasDst) {
+          if (n2 === n1 || n2 === nMid) continue;
+          const l2 = DB.lineas[n2]; if (!l2) continue;
+          const comunMD = l2.paradas.find(p => paradasMid.has(p.id));
+          if (comunMD) {
+            resultados.push({
+              pasos: [
+                { num: n1, nombre: l1.nombre, horarios: l1.horarios },
+                { num: nMid, nombre: lMid.nombre, horarios: lMid.horarios },
+                { num: n2, nombre: l2.nombre, horarios: l2.horarios }
+              ],
+              transbordos: [
+                { id: comunOM.id, nombre: comunOM.nombre },
+                { id: comunMD.id, nombre: comunMD.nombre }
+              ]
+            });
+            if (resultados.length >= 3) break;
+          }
+        }
+        if (resultados.length >= 3) break;
+      }
+    }
   }
-  return { tipo: transbordos.length?'transbordo':'sinruta', oriNombre:ori[0].nombre, dstNombre:dst[0].nombre, transbordos };
+
+  if (resultados.length) return { tipo:'transbordo', oriNombre, dstNombre, resultados };
+  return { tipo:'sinruta', oriNombre, dstNombre };
 }
 
 // Formateadores
 function fmtLineaResumen(linea, num) {
-  return `<strong>Línea ${num} — ${linea.nombre}</strong><br><br>¿Qué quieres saber? Pulsa un botón o pregúntame.`;
+  return `<strong>Línea ${num} — ${linea.nombre}</strong><br><br>¿Qué quieres saber?`;
 }
 
 function fmtHorarios(linea, num, tipo) {
   const h = linea.horarios[tipo];
-  if (!h || !Object.keys(h).length) {
-    const tipoNombre = tipo==='S'?'sábado':tipo==='D'?'domingo':'laborable';
-    return `No hay horarios de ${tipoNombre} para la línea ${num}.`;
-  }
-  const tipoNombre = tipo==='S'?'Sábado':tipo==='D'?'Domingo / Festivo':'Laborable';
-  const destinos = Object.entries(h);
-
-  // Tabla: columnas = los 2 destinos (ida y vuelta), filas = horas
-  const cols = destinos.map(([dest, horas]) => ({ dest, horas }));
-  const maxFilas = Math.max(...cols.map(c => c.horas.length));
-
-  let html = `<strong>Línea ${num} — Horarios ${tipoNombre}</strong>`;
-  html += '<table><tr>';
-  cols.forEach(c => { html += `<th>${c.dest.split('(')[0].trim()}</th>`; });
+  const tipoNombre = tipo==='S'?'Sábado':tipo==='D'?'Domingo/Festivo':'Laborable';
+  if (!h || !Object.keys(h).length) return `No hay horarios de ${tipoNombre} para la línea ${num}.`;
+  const cols = Object.entries(h);
+  const maxFilas = Math.max(...cols.map(([,horas]) => horas.length));
+  let html = `<strong>Línea ${num} — ${tipoNombre}</strong><table><tr>`;
+  cols.forEach(([dest]) => { html += `<th>${dest.split('(')[0].trim()}</th>`; });
   html += '</tr>';
   for (let i = 0; i < maxFilas; i++) {
     html += '<tr>';
-    cols.forEach(c => { html += `<td>${c.horas[i] ? fmtHora(c.horas[i]) : ''}</td>`; });
+    cols.forEach(([,horas]) => { html += `<td>${horas[i] ? fmtHora(horas[i]) : ''}</td>`; });
     html += '</tr>';
   }
   html += '</table>';
@@ -297,9 +395,9 @@ function fmtParadaInfo(id) {
 function fmtRuta(r) {
   if (r.error) {
     let html = 'No encontré paradas para esa ruta.<br><br>';
-    if (!r.ori.length) html += `No hay paradas con ese origen.<br>`;
-    if (!r.dst.length) html += `No hay paradas con ese destino.<br>`;
-    html += '<br><small>Prueba: "laguna", "santa cruz", "aeropuerto", "puerto cruz", "los cristianos", "adeje"</small>';
+    if (!r.paradasOri.length) html += 'No reconozco el origen.<br>';
+    if (!r.paradasDst.length) html += 'No reconozco el destino.<br>';
+    html += '<br><small>Prueba con: "santa cruz", "laguna", "aeropuerto", "puerto cruz", "los cristianos", "adeje", "icod"…</small>';
     return html;
   }
   if (r.tipo === 'directa') {
@@ -308,30 +406,33 @@ function fmtRuta(r) {
     r.lineas.slice(0,5).forEach(l => {
       const hL = l.horarios?.L; const pd = hL?Object.values(hL)[0]:null;
       html += `<div class="ruta-bloque"><span class="linea-badge">${l.num}</span> <strong>${l.nombre}</strong>`;
-      if (pd) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(pd[0])} – ${fmtHora(pd[pd.length-1])} · ${pd.length} salidas</small>`;
+      if (pd && pd.length) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(pd[0])} – ${fmtHora(pd[pd.length-1])} · ${pd.length} salidas</small>`;
       html += '</div>';
     });
     return html;
   }
   if (r.tipo === 'transbordo') {
     let html = `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>`;
-    html += '<strong>🔄 Sin línea directa. Rutas con transbordo:</strong><br>';
-    r.transbordos.forEach((t,i) => {
-      const h1 = t.linea1.horarios?.L?Object.values(t.linea1.horarios.L)[0]:null;
-      const h2 = t.linea2.horarios?.L?Object.values(t.linea2.horarios.L)[0]:null;
+    html += '<strong>🔄 Sin línea directa — opciones con transbordo:</strong><br>';
+    r.resultados.forEach((res, i) => {
       html += `<div class="ruta-bloque"><strong>Opción ${i+1}:</strong><br>`;
-      html += `<span class="linea-badge">${t.linea1.num}</span> <strong>${t.linea1.nombre}</strong>`;
-      if (h1) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h1[0])} – ${fmtHora(h1[h1.length-1])}</small>`;
-      html += `<br><span class="transbordo-tag">TRANSBORDO</span> en <span class="parada-id">${t.transbordo.id}</span> ${t.transbordo.nombre}<br>`;
-      html += `<span class="linea-badge">${t.linea2.num}</span> <strong>${t.linea2.nombre}</strong>`;
-      if (h2) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h2[0])} – ${fmtHora(h2[h2.length-1])}</small>`;
+      res.pasos.forEach((paso, pi) => {
+        const hL = paso.horarios?.L; const pd = hL?Object.values(hL)[0]:null;
+        html += `<span class="linea-badge">${paso.num}</span> <strong>${paso.nombre}</strong>`;
+        if (pd && pd.length) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(pd[0])} – ${fmtHora(pd[pd.length-1])}</small>`;
+        if (pi < res.transbordos.length) {
+          const tb = res.transbordos[pi];
+          html += `<br><span class="transbordo-tag">TRANSBORDO</span> en <span class="parada-id">${tb.id}</span> ${tb.nombre}<br>`;
+        }
+      });
       html += '</div>';
     });
     return html;
   }
-  return `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>No se encontró ruta directa ni con transbordo.<br><small>Consulta <a href="https://www.titsa.com" target="_blank">titsa.com</a>.</small>`;
+  return `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>No se encontró ruta.<br><small>Consulta <a href="https://www.titsa.com" target="_blank">titsa.com</a>.</small>`;
 }
 
+// Motor principal
 async function handleSend() {
   const inp = document.getElementById('input');
   const text = inp.value.trim(); if (!text) return;
@@ -345,24 +446,26 @@ async function process(text) {
   await new Promise(r => setTimeout(r,150));
   const txt = text.toLowerCase();
 
+  // Paradas en contexto línea
   if (/paradas?|recorrido/.test(txt) && ctx?.tipo==='linea') {
     hideTyping(); addBot(fmtParadas(ctx.datos,ctx.num)); setLoading(false); return;
   }
 
+  // Número de línea
   const numLinea = detectaLinea(text);
   if (numLinea) {
     const linea = DB.lineas[numLinea]; hideTyping();
     if (!linea) { addBot(`No encontré la línea <strong>${numLinea}</strong>.`); }
     else {
-      const tipo = detectaTipo(text);
       setCtx('linea', linea, numLinea, `Línea ${numLinea} — ${linea.nombre}`);
       if (/paradas?|recorrido/.test(txt)) addBot(fmtParadas(linea,numLinea));
-      else if (/horario|salida|hora/.test(txt)) addBot(fmtHorarios(linea,numLinea,tipo));
+      else if (/horario|salida|hora/.test(txt)) addBot(fmtHorarios(linea,numLinea,detectaTipo(text)));
       else addBot(fmtLineaResumen(linea,numLinea));
     }
     setLoading(false); return;
   }
 
+  // Número de parada
   const numParada = detectaParada(text);
   if (numParada) {
     hideTyping();
@@ -371,32 +474,23 @@ async function process(text) {
     setLoading(false); return;
   }
 
+  // Ruta
   if (detectaRuta(text)) {
-    let origen='', destino='';
-    let m = text.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|al?|hacia|a)\s+(.+?)(?:\?|$)/i);
-    if (m) { origen=m[1].trim(); destino=m[2].trim(); }
-    else {
-      // "como llego a X desde Y" o "como llego a X"
-      m = text.match(/(?:cómo|como)\s+(?:ir|llegar|voy|puedo\s+ir|puedo\s+llegar)\s+(?:al?|hasta|a)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
-      if (m) { destino=m[1].trim(); origen=(m[2]||'').trim(); }
-      else {
-        // "llego a X desde Y" o "voy a X desde Y"
-        m = text.match(/(?:llego|voy|quiero\s+ir|necesito\s+ir|quiero\s+llegar)\s+(?:al?|a)\s+(.+?)\s+(?:desde|de)\s+(.+?)(?:\?|$)/i);
-        if (m) { destino=m[1].trim(); origen=m[2].trim(); }
-        else {
-          // "de X a Y" sin palabras previas
-          m = text.match(/^(?:de|desde)\s+(.+?)\s+(?:al?|a|hasta)\s+(.+?)(?:\?|$)/i);
-          if (m) { origen=m[1].trim(); destino=m[2].trim(); }
-        }
-      }
-    }
+    const { origen, destino } = extraerOD(text);
     hideTyping();
-    if (!destino) addBot('Dime origen y destino. Ej: <strong>"cómo ir de La Laguna al aeropuerto"</strong>');
-    else if (!origen) addBot(`¿Desde dónde quieres ir a <strong>${destino}</strong>?`);
-    else addBot(fmtRuta(buscarRuta(origen,destino)));
+    if (!destino && !origen) {
+      addBot('Dime origen y destino.<br>Ej: <strong>"cómo ir de La Laguna al aeropuerto"</strong>');
+    } else if (!origen) {
+      addBot(`¿Desde dónde quieres ir a <strong>${destino}</strong>?`);
+    } else if (!destino) {
+      addBot(`¿A dónde quieres ir desde <strong>${origen}</strong>?`);
+    } else {
+      addBot(fmtRuta(buscarRuta(origen, destino)));
+    }
     setLoading(false); return;
   }
 
+  // Con contexto activo
   if (ctx?.tipo==='linea') {
     hideTyping(); addBot(fmtHorarios(ctx.datos,ctx.num,detectaTipo(text))); setLoading(false); return;
   }
@@ -404,8 +498,21 @@ async function process(text) {
     hideTyping(); addBot(fmtParadaInfo(ctx.num)); setLoading(false); return;
   }
 
+  // Búsqueda de parada por nombre (ej: "qué guaguas pasan por avenida anaga")
+  if (/gu[aá]guas?\s+(pasan|paran|hay|van)\s+(?:por|en)|paradas?\s+(?:de|en|cerca)/i.test(txt)) {
+    const paradasEncontradas = buscarParadas(text);
+    hideTyping();
+    if (paradasEncontradas.length) {
+      setCtx('parada', paradasEncontradas[0], paradasEncontradas[0].id, `Parada ${paradasEncontradas[0].id} — ${paradasEncontradas[0].nombre}`);
+      addBot(fmtParadaInfo(paradasEncontradas[0].id));
+    } else {
+      addBot('No encontré esa parada. Prueba con el número de parada directamente.');
+    }
+    setLoading(false); return;
+  }
+
   hideTyping();
-  addBot('No entendí la consulta.<br>• <strong>Línea:</strong> "103" o "línea 50"<br>• <strong>Parada:</strong> "2625"<br>• <strong>Ruta:</strong> "cómo ir de La Laguna al aeropuerto"');
+  addBot('No entendí la consulta.<br>• <strong>Línea:</strong> "103" o "línea 50"<br>• <strong>Parada:</strong> "2625"<br>• <strong>Ruta:</strong> "cómo ir de La Laguna al aeropuerto"<br>• <strong>También:</strong> "estoy en Las Teresitas cómo voy a Santa Cruz"');
   setLoading(false);
 }
 </script>
