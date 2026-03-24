@@ -30,8 +30,8 @@
     .user .bubble { background: var(--verde); color: #fff; border-radius: 16px 3px 16px 16px; padding: 10px 13px; font-size: 13px; }
     .msg-time { font-size: 10px; color: var(--texto-suave); padding: 0 4px; }
     .bubble table { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 12px; }
-    .bubble th { background: var(--verde); color: #fff; padding: 6px 8px; text-align: center; font-weight: 600; font-size: 11px; }
-    .bubble td { padding: 5px 8px; border-bottom: 1px solid var(--borde); text-align: center; }
+    .bubble th { background: var(--verde); color: #fff; padding: 6px 8px; text-align: center; font-weight: 600; font-size: 11px; line-height: 1.3; }
+    .bubble td { padding: 4px 8px; border-bottom: 1px solid var(--borde); text-align: center; }
     .bubble tr:nth-child(even) td { background: #f7f7f4; }
     .linea-badge { display: inline-block; background: var(--verde); color: #fff; font-family: 'DM Mono', monospace; font-size: 11px; padding: 1px 7px; border-radius: 5px; margin-right: 4px; }
     .parada-id { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--verde); background: var(--verde-bg); padding: 1px 5px; border-radius: 4px; margin-right: 4px; }
@@ -44,7 +44,7 @@
     .chat-input { flex: 1; border: 1px solid var(--borde); border-radius: 20px; padding: 9px 15px; font-size: 13px; font-family: 'DM Sans', sans-serif; background: var(--fondo); color: var(--texto); outline: none; transition: border-color 0.13s; }
     .chat-input:focus { border-color: var(--verde); }
     .chat-input:disabled { opacity: 0.5; }
-    .send-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--verde); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: opacity 0.13s; }
+    .send-btn { width: 34px; height: 34px; border-radius: 50%; background: var(--verde); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
     .send-btn:hover { opacity: 0.82; }
     .send-btn:disabled { opacity: 0.38; cursor: default; }
     .send-btn svg { width: 14px; height: 14px; }
@@ -92,50 +92,24 @@
 </div>
 <script>
 const DATA_URL = 'data/titsa_completo.json';
-let DB = null;
-let ctx = null;
+let DB = null, ctx = null;
 
-// Aliases: palabras clave -> IDs de paradas principales
 const ALIASES = {
-  'santa cruz': ['9181', '9450'],
-  'intercambiador santa cruz': ['9181', '9450'],
-  'laguna': ['2625', '2830'],
-  'la laguna': ['2625', '2830'],
-  'intercambiador laguna': ['2625', '2830'],
-  'aeropuerto norte': ['4537'],
-  'aeropuerto tfn': ['4537'],
-  'los rodeos': ['4537'],
-  'aeropuerto sur': ['7571', '8326'],
-  'aeropuerto tfs': ['7571', '8326'],
-  'reina sofia': ['7571'],
-  'aeropuerto': ['4537', '7571', '8326'],
-  'puerto de la cruz': ['5090', '9197'],
-  'puerto cruz': ['5090'],
-  'los cristianos': ['7140', '8184'],
-  'costa adeje': ['7142'],
-  'adeje': ['7142'],
-  'icod': ['4358'],
-  'icod de los vinos': ['4358'],
-  'candelaria': ['1723'],
-  'hospital candelaria': ['1280', '1375'],
-  'orotava': ['4009'],
-  'la orotava': ['4009'],
-  'buenavista': ['9198'],
-  'masca': ['4553'],
-  'teide': ['4692'],
-  'punta del hidalgo': ['1327'],
-  'bajamar': ['1318'],
-  'guimar': ['8390'],
-  'granadilla': ['3504'],
-  'san isidro': ['3500'],
-  'el medano': ['3519'],
-  'medano': ['3519'],
-  'los gigantes': ['4651'],
-  'gigantes': ['4651'],
-  'santiago del teide': ['4692'],
-  'tacoronte': ['2100'],
-  'sauzal': ['2140'],
-  'el sauzal': ['2140'],
+  'santa cruz': ['9181','9450'], 'intercambiador santa cruz': ['9181','9450'],
+  'laguna': ['2625','2830'], 'la laguna': ['2625','2830'], 'intercambiador laguna': ['2625','2830'],
+  'aeropuerto norte': ['4537'], 'aeropuerto tfn': ['4537'], 'los rodeos': ['4537'],
+  'aeropuerto sur': ['7571','8326'], 'aeropuerto tfs': ['7571','8326'], 'reina sofia': ['7571'],
+  'aeropuerto': ['4537','7571','8326'],
+  'puerto de la cruz': ['5090','9197'], 'puerto cruz': ['5090'],
+  'los cristianos': ['7140','8184'], 'costa adeje': ['7142'], 'adeje': ['7142'],
+  'icod': ['4358'], 'icod de los vinos': ['4358'],
+  'candelaria': ['1723'], 'hospital candelaria': ['1280','1375'],
+  'orotava': ['4009'], 'la orotava': ['4009'],
+  'buenavista': ['9198'], 'masca': ['4553'], 'teide': ['4692'],
+  'punta del hidalgo': ['1327'], 'bajamar': ['1318'],
+  'tacoronte': ['2100'], 'sauzal': ['2140'], 'el sauzal': ['2140'],
+  'los gigantes': ['4651'], 'gigantes': ['4651'],
+  'granadilla': ['3504'], 'san isidro': ['3500'], 'el medano': ['3519'], 'medano': ['3519'],
 };
 
 fetch(DATA_URL)
@@ -149,14 +123,11 @@ fetch(DATA_URL)
       '• <strong>Parada:</strong> "2625", "parada 1234"<br>' +
       '• <strong>Ruta:</strong> "cómo ir de La Laguna al aeropuerto"');
   })
-  .catch(() => {
-    document.getElementById('loading-overlay').style.display = 'none';
-    addBot('Error cargando datos. Recarga la página.');
-  });
+  .catch(() => { document.getElementById('loading-overlay').style.display = 'none'; addBot('Error cargando datos. Recarga la página.'); });
 
 document.getElementById('input').addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
 
-function now() { return new Date().toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'}); }
+function now() { return new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'}); }
 function addBot(html) {
   const chat = document.getElementById('chat');
   const el = document.createElement('div');
@@ -190,165 +161,125 @@ function resetCtx() {
   ctx = null;
   document.getElementById('ctx-banner').style.display = 'none';
   document.getElementById('chips').style.display = 'none';
-  addBot('Contexto borrado. ¿Qué línea, parada o ruta consultas?');
+  addBot('¿Qué línea, parada o ruta consultas?');
 }
 
 function normalizar(s) {
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s]/g, ' ').trim();
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').trim();
 }
-
 function fmtHora(h) {
   if (!h) return '-';
-  const parts = h.split(':');
-  let hh = parseInt(parts[0]) % 24;
-  return `${String(hh).padStart(2,'0')}:${parts[1] || '00'}`;
+  const p = h.split(':');
+  return `${String(parseInt(p[0])%24).padStart(2,'0')}:${p[1]||'00'}`;
 }
 
 function detectaLinea(t) {
   const txt = t.toLowerCase();
   if (/\b\d{4,}\b/.test(txt)) return null;
-  let m = txt.match(/l[ií]nea\s+0*(\d{1,3})\b/);
-  if (m) return m[1];
-  m = txt.match(/^0*(\d{1,3})$/);
-  if (m) return m[1];
-  m = txt.match(/\b0*(\d{2,3})\b/);
-  if (m && !txt.includes('parada')) return m[1];
+  let m = txt.match(/l[ií]nea\s+0*(\d{1,3})\b/); if (m) return m[1];
+  m = txt.match(/^0*(\d{1,3})$/); if (m) return m[1];
+  m = txt.match(/\b0*(\d{2,3})\b/); if (m && !txt.includes('parada')) return m[1];
   return null;
 }
 function detectaParada(t) {
   const txt = t.toLowerCase();
-  let m = txt.match(/(?:parada|stop)\s+(\d{3,5})\b/);
-  if (m) return m[1];
-  m = txt.match(/\b(\d{4,5})\b/);
-  if (m) return m[1];
+  let m = txt.match(/(?:parada|stop)\s+(\d{3,5})\b/); if (m) return m[1];
+  m = txt.match(/\b(\d{4,5})\b/); if (m) return m[1];
   return null;
 }
 function detectaRuta(t) {
   return /c[oó]mo\s+(ir|llegar|voy)|qu[eé]\s+(guagua|l[ií]nea)\s+(tengo|coger|tomo|va|hay)|(?:ir|llegar)\s+(?:desde|de)|(?:desde|de)\s+.+\s+(?:hasta|a\s+)|para\s+ir\s+a|c[oó]mo\s+llego/i.test(t);
 }
-function detectaTipoHorario(t) {
+function detectaTipo(t) {
   const txt = t.toLowerCase();
   if (/s[aá]bado/.test(txt)) return 'S';
   if (/domingo|festivo/.test(txt)) return 'D';
   return 'L';
 }
 
-// Busca paradas por alias primero, luego por nombre en la DB
 function buscarParadas(query) {
   const q = normalizar(query);
-  
-  // 1. Buscar en aliases (más largo primero para evitar falsos positivos)
-  const aliasKeys = Object.keys(ALIASES).sort((a, b) => b.length - a.length);
+  const aliasKeys = Object.keys(ALIASES).sort((a,b) => b.length - a.length);
   for (const alias of aliasKeys) {
     if (q.includes(normalizar(alias))) {
-      const ids = ALIASES[alias];
-      return ids.map(id => ({ id, ...DB.paradas[id] })).filter(p => p.nombre);
+      return ALIASES[alias].map(id => ({ id, ...DB.paradas[id] })).filter(p => p.nombre);
     }
   }
-  
-  // 2. Buscar por palabras en la DB
   const words = q.split(/\s+/).filter(w => w.length > 2);
-  const resultados = [];
+  const res = [];
   for (const [id, p] of Object.entries(DB.paradas)) {
-    const nombre = normalizar(p.nombre);
-    const score = words.filter(w => nombre.includes(w)).length;
-    if (score > 0) resultados.push({ id, ...p, score });
+    const score = words.filter(w => normalizar(p.nombre).includes(w)).length;
+    if (score > 0) res.push({ id, ...p, score });
   }
-  return resultados.sort((a, b) => b.score - a.score).slice(0, 5);
+  return res.sort((a,b) => b.score - a.score).slice(0, 5);
 }
 
-// Busca rutas directas y con transbordo
 function buscarRuta(origen, destino) {
-  const paradasOri = buscarParadas(origen);
-  const paradasDst = buscarParadas(destino);
+  const ori = buscarParadas(origen);
+  const dst = buscarParadas(destino);
+  if (!ori.length || !dst.length) return { error: true, ori, dst };
 
-  if (!paradasOri.length || !paradasDst.length) {
-    return { error: true, paradasOri, paradasDst };
-  }
-
-  const lineasOri = new Set(paradasOri.flatMap(p => p.lineas || []));
-  const lineasDst = new Set(paradasDst.flatMap(p => p.lineas || []));
-
-  // Líneas directas
+  const lineasOri = new Set(ori.flatMap(p => p.lineas||[]));
+  const lineasDst = new Set(dst.flatMap(p => p.lineas||[]));
   const directas = [...lineasOri].filter(l => lineasDst.has(l))
-    .map(num => ({ num, ...DB.lineas[num] }))
-    .filter(l => l.nombre);
+    .map(num => ({ num, ...DB.lineas[num] })).filter(l => l.nombre);
 
-  if (directas.length) {
-    return { tipo: 'directa', oriNombre: paradasOri[0].nombre, dstNombre: paradasDst[0].nombre, lineas: directas };
-  }
+  if (directas.length) return { tipo:'directa', oriNombre: ori[0].nombre, dstNombre: dst[0].nombre, lineas: directas };
 
-  // Transbordos: para cada linea de origen, ver si comparte parada con alguna linea de destino
-  const transbordos = [];
-  const visto = new Set();
-
-  for (const numL1 of lineasOri) {
-    const l1 = DB.lineas[numL1];
-    if (!l1) continue;
-    const paradasL1 = new Set(l1.paradas.map(p => p.id));
-
-    for (const numL2 of lineasDst) {
-      if (numL1 === numL2) continue;
-      const key = `${numL1}-${numL2}`;
-      if (visto.has(key)) continue;
-      visto.add(key);
-
-      const l2 = DB.lineas[numL2];
-      if (!l2) continue;
-
-      // Paradas comunes entre l1 y l2
-      const comunes = l2.paradas.filter(p => paradasL1.has(p.id));
-      if (comunes.length > 0) {
-        transbordos.push({
-          linea1: { num: numL1, nombre: l1.nombre, horarios: l1.horarios },
-          linea2: { num: numL2, nombre: l2.nombre, horarios: l2.horarios },
-          transbordo: comunes[0]
-        });
+  // Transbordos
+  const transbordos = [], visto = new Set();
+  for (const n1 of lineasOri) {
+    const l1 = DB.lineas[n1]; if (!l1) continue;
+    const pl1 = new Set(l1.paradas.map(p => p.id));
+    for (const n2 of lineasDst) {
+      if (n1 === n2) continue;
+      const key = `${n1}-${n2}`; if (visto.has(key)) continue; visto.add(key);
+      const l2 = DB.lineas[n2]; if (!l2) continue;
+      const comun = l2.paradas.find(p => pl1.has(p.id));
+      if (comun) {
+        transbordos.push({ linea1:{num:n1,...l1}, linea2:{num:n2,...l2}, transbordo:comun });
         if (transbordos.length >= 3) break;
       }
     }
     if (transbordos.length >= 3) break;
   }
-
-  return { tipo: transbordos.length ? 'transbordo' : 'sinruta', oriNombre: paradasOri[0].nombre, dstNombre: paradasDst[0].nombre, transbordos };
+  return { tipo: transbordos.length?'transbordo':'sinruta', oriNombre:ori[0].nombre, dstNombre:dst[0].nombre, transbordos };
 }
 
 // Formateadores
+function fmtLineaResumen(linea, num) {
+  return `<strong>Línea ${num} — ${linea.nombre}</strong><br><br>¿Qué quieres saber? Pulsa un botón o pregúntame.`;
+}
+
 function fmtHorarios(linea, num, tipo) {
   const h = linea.horarios[tipo];
-  if (!h || !Object.keys(h).length) return `No hay horarios de ${tipo === 'S' ? 'sábado' : tipo === 'D' ? 'domingo' : 'laborable'} para esta línea.`;
-  const tipoNombre = tipo === 'S' ? 'Sábado' : tipo === 'D' ? 'Domingo / Festivo' : 'Laborable';
-  let html = `<strong>Línea ${num} — Horarios ${tipoNombre}</strong><table><tr>`;
+  if (!h || !Object.keys(h).length) {
+    const tipoNombre = tipo==='S'?'sábado':tipo==='D'?'domingo':'laborable';
+    return `No hay horarios de ${tipoNombre} para la línea ${num}.`;
+  }
+  const tipoNombre = tipo==='S'?'Sábado':tipo==='D'?'Domingo / Festivo':'Laborable';
   const destinos = Object.entries(h);
-  destinos.forEach(([dest]) => { html += `<th>${dest.split('(')[0].trim()}</th>`; });
-  html += '</tr><tr>';
-  destinos.forEach(([, info]) => {
-    html += `<td><strong>${fmtHora(info.primero)}</strong> → <strong>${fmtHora(info.ultimo)}</strong><br><small style="color:var(--texto-suave)">${info.total} salidas</small></td>`;
-  });
-  html += '</tr></table>';
+
+  // Tabla: columnas = los 2 destinos (ida y vuelta), filas = horas
+  const cols = destinos.map(([dest, horas]) => ({ dest, horas }));
+  const maxFilas = Math.max(...cols.map(c => c.horas.length));
+
+  let html = `<strong>Línea ${num} — Horarios ${tipoNombre}</strong>`;
+  html += '<table><tr>';
+  cols.forEach(c => { html += `<th>${c.dest.split('(')[0].trim()}</th>`; });
+  html += '</tr>';
+  for (let i = 0; i < maxFilas; i++) {
+    html += '<tr>';
+    cols.forEach(c => { html += `<td>${c.horas[i] ? fmtHora(c.horas[i]) : ''}</td>`; });
+    html += '</tr>';
+  }
+  html += '</table>';
   return html;
 }
 
 function fmtParadas(linea, num) {
-  const paradas = linea.paradas || [];
-  let html = `<strong>Línea ${num} — ${paradas.length} paradas</strong><br><br>`;
-  paradas.forEach(p => { html += `<span class="parada-id">${p.id}</span> ${p.nombre}<br>`; });
-  return html;
-}
-
-function fmtLineaResumen(linea, num) {
-  let html = `<strong>Línea ${num} — ${linea.nombre}</strong><br><br>`;
-  const h = linea.horarios;
-  if (h.L && Object.keys(h.L).length) {
-    Object.entries(h.L).forEach(([dest, info]) => {
-      html += `<strong>→ ${dest.split('(')[0].trim()}</strong><br>`;
-      html += `Lab: <strong>${fmtHora(info.primero)}</strong> – <strong>${fmtHora(info.ultimo)}</strong> (${info.total} salidas)<br>`;
-      if (h.S?.[dest]) html += `Sáb: <strong>${fmtHora(h.S[dest].primero)}</strong> – <strong>${fmtHora(h.S[dest].ultimo)}</strong><br>`;
-      if (h.D?.[dest]) html += `Dom: <strong>${fmtHora(h.D[dest].primero)}</strong> – <strong>${fmtHora(h.D[dest].ultimo)}</strong><br>`;
-      html += '<br>';
-    });
-  }
-  html += `${linea.paradas.length} paradas en el recorrido.`;
+  let html = `<strong>Línea ${num} — ${linea.paradas.length} paradas</strong><br><br>`;
+  linea.paradas.forEach(p => { html += `<span class="parada-id">${p.id}</span> ${p.nombre}<br>`; });
   return html;
 }
 
@@ -358,125 +289,107 @@ function fmtParadaInfo(id) {
   let html = `<strong>Parada ${id} — ${p.nombre}</strong><br><br><strong>${p.lineas.length} líneas:</strong><br>`;
   p.lineas.forEach(num => {
     const l = DB.lineas[num];
-    html += `<div style="margin:3px 0"><span class="linea-badge">${num}</span> ${l ? l.nombre : num}</div>`;
+    html += `<div style="margin:3px 0"><span class="linea-badge">${num}</span> ${l?l.nombre:num}</div>`;
   });
   return html;
 }
 
 function fmtRuta(r) {
   if (r.error) {
-    let html = `No encontré paradas para esa ruta.<br><br>`;
-    if (!r.paradasOri.length) html += `No hay paradas con ese origen.<br>`;
-    if (!r.paradasDst.length) html += `No hay paradas con ese destino.<br>`;
-    html += `<br><small>Prueba: "laguna", "santa cruz", "aeropuerto", "puerto cruz", "los cristianos", "adeje"</small>`;
+    let html = 'No encontré paradas para esa ruta.<br><br>';
+    if (!r.ori.length) html += `No hay paradas con ese origen.<br>`;
+    if (!r.dst.length) html += `No hay paradas con ese destino.<br>`;
+    html += '<br><small>Prueba: "laguna", "santa cruz", "aeropuerto", "puerto cruz", "los cristianos", "adeje"</small>';
     return html;
   }
-
   if (r.tipo === 'directa') {
-    let html = `<strong>De ${r.oriNombre} → ${r.dstNombre}</strong><br><br>`;
-    html += `<strong>✅ ${r.lineas.length} línea${r.lineas.length > 1 ? 's' : ''} directa${r.lineas.length > 1 ? 's' : ''}:</strong><br>`;
-    r.lineas.slice(0, 5).forEach(l => {
-      const hL = l.horarios?.L;
-      const primDest = hL ? Object.values(hL)[0] : null;
+    let html = `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>`;
+    html += `<strong>✅ ${r.lineas.length} línea${r.lineas.length>1?'s':''} directa${r.lineas.length>1?'s':''}:</strong><br>`;
+    r.lineas.slice(0,5).forEach(l => {
+      const hL = l.horarios?.L; const pd = hL?Object.values(hL)[0]:null;
       html += `<div class="ruta-bloque"><span class="linea-badge">${l.num}</span> <strong>${l.nombre}</strong>`;
-      if (primDest) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(primDest.primero)} – ${fmtHora(primDest.ultimo)} · ${primDest.total} salidas</small>`;
-      html += `</div>`;
+      if (pd) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(pd[0])} – ${fmtHora(pd[pd.length-1])} · ${pd.length} salidas</small>`;
+      html += '</div>';
     });
     return html;
   }
-
   if (r.tipo === 'transbordo') {
-    let html = `<strong>De ${r.oriNombre} → ${r.dstNombre}</strong><br><br>`;
-    html += `<strong>🔄 No hay línea directa. Rutas con transbordo:</strong><br>`;
-    r.transbordos.forEach((t, i) => {
-      const h1 = t.linea1.horarios?.L ? Object.values(t.linea1.horarios.L)[0] : null;
-      const h2 = t.linea2.horarios?.L ? Object.values(t.linea2.horarios.L)[0] : null;
-      html += `<div class="ruta-bloque">`;
-      html += `<strong>Opción ${i+1}:</strong><br>`;
+    let html = `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>`;
+    html += '<strong>🔄 Sin línea directa. Rutas con transbordo:</strong><br>';
+    r.transbordos.forEach((t,i) => {
+      const h1 = t.linea1.horarios?.L?Object.values(t.linea1.horarios.L)[0]:null;
+      const h2 = t.linea2.horarios?.L?Object.values(t.linea2.horarios.L)[0]:null;
+      html += `<div class="ruta-bloque"><strong>Opción ${i+1}:</strong><br>`;
       html += `<span class="linea-badge">${t.linea1.num}</span> <strong>${t.linea1.nombre}</strong>`;
-      if (h1) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h1.primero)} – ${fmtHora(h1.ultimo)}</small>`;
+      if (h1) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h1[0])} – ${fmtHora(h1[h1.length-1])}</small>`;
       html += `<br><span class="transbordo-tag">TRANSBORDO</span> en <span class="parada-id">${t.transbordo.id}</span> ${t.transbordo.nombre}<br>`;
       html += `<span class="linea-badge">${t.linea2.num}</span> <strong>${t.linea2.nombre}</strong>`;
-      if (h2) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h2.primero)} – ${fmtHora(h2.ultimo)}</small>`;
-      html += `</div>`;
+      if (h2) html += `<br><small style="color:var(--texto-suave)">Lab: ${fmtHora(h2[0])} – ${fmtHora(h2[h2.length-1])}</small>`;
+      html += '</div>';
     });
     return html;
   }
-
-  return `<strong>De ${r.oriNombre} → ${r.dstNombre}</strong><br><br>No se encontró ninguna ruta directa ni con transbordo.<br><small>Consulta <a href="https://www.titsa.com" target="_blank">titsa.com</a> para más opciones.</small>`;
+  return `<strong>${r.oriNombre} → ${r.dstNombre}</strong><br><br>No se encontró ruta directa ni con transbordo.<br><small>Consulta <a href="https://www.titsa.com" target="_blank">titsa.com</a>.</small>`;
 }
 
-// Motor principal
 async function handleSend() {
   const inp = document.getElementById('input');
-  const text = inp.value.trim();
-  if (!text) return;
-  inp.value = '';
-  await process(text);
+  const text = inp.value.trim(); if (!text) return;
+  inp.value = ''; await process(text);
 }
 async function sendChip(text) { await process(text); }
 
 async function process(text) {
   if (!DB) { addBot('Los datos aún se están cargando, espera.'); return; }
-  addUser(text);
-  setLoading(true);
-  showTyping();
-  await new Promise(r => setTimeout(r, 150));
+  addUser(text); setLoading(true); showTyping();
+  await new Promise(r => setTimeout(r,150));
   const txt = text.toLowerCase();
 
-  // Paradas del recorrido en contexto línea
-  if (/paradas?|recorrido/.test(txt) && ctx?.tipo === 'linea') {
-    hideTyping(); addBot(fmtParadas(ctx.datos, ctx.num)); setLoading(false); return;
+  if (/paradas?|recorrido/.test(txt) && ctx?.tipo==='linea') {
+    hideTyping(); addBot(fmtParadas(ctx.datos,ctx.num)); setLoading(false); return;
   }
 
-  // Número de línea
   const numLinea = detectaLinea(text);
   if (numLinea) {
-    const linea = DB.lineas[numLinea];
-    hideTyping();
+    const linea = DB.lineas[numLinea]; hideTyping();
     if (!linea) { addBot(`No encontré la línea <strong>${numLinea}</strong>.`); }
     else {
-      const tipo = detectaTipoHorario(text);
-      const pideParadas = /paradas?|recorrido/.test(txt);
-      const pideHorarios = /horario|salida|hora/.test(txt);
+      const tipo = detectaTipo(text);
       setCtx('linea', linea, numLinea, `Línea ${numLinea} — ${linea.nombre}`);
-      if (pideParadas) addBot(fmtParadas(linea, numLinea));
-      else if (pideHorarios) addBot(fmtHorarios(linea, numLinea, tipo));
-      else addBot(fmtLineaResumen(linea, numLinea));
+      if (/paradas?|recorrido/.test(txt)) addBot(fmtParadas(linea,numLinea));
+      else if (/horario|salida|hora/.test(txt)) addBot(fmtHorarios(linea,numLinea,tipo));
+      else addBot(fmtLineaResumen(linea,numLinea));
     }
     setLoading(false); return;
   }
 
-  // Número de parada
   const numParada = detectaParada(text);
   if (numParada) {
     hideTyping();
     if (!DB.paradas[numParada]) { addBot(`No encontré la parada <strong>${numParada}</strong>.`); }
-    else { setCtx('parada', DB.paradas[numParada], numParada, `Parada ${numParada} — ${DB.paradas[numParada].nombre}`); addBot(fmtParadaInfo(numParada)); }
+    else { setCtx('parada',DB.paradas[numParada],numParada,`Parada ${numParada} — ${DB.paradas[numParada].nombre}`); addBot(fmtParadaInfo(numParada)); }
     setLoading(false); return;
   }
 
-  // Ruta
   if (detectaRuta(text)) {
-    let origen = '', destino = '';
+    let origen='', destino='';
     let m = text.match(/(?:desde|de)\s+(.+?)\s+(?:hasta|al?|hacia)\s+(.+?)(?:\?|$)/i);
-    if (m) { origen = m[1].trim(); destino = m[2].trim(); }
+    if (m) { origen=m[1].trim(); destino=m[2].trim(); }
     else {
       m = text.match(/(?:cómo|como)\s+(?:ir|llegar|voy)\s+(?:al?|hasta|a)\s+(.+?)(?:\s+desde\s+(.+?))?(?:\?|$)/i);
-      if (m) { destino = m[1].trim(); origen = (m[2] || '').trim(); }
+      if (m) { destino=m[1].trim(); origen=(m[2]||'').trim(); }
     }
     hideTyping();
-    if (!destino) { addBot('Dime origen y destino. Ej: <strong>"cómo ir de La Laguna al aeropuerto"</strong>'); }
-    else if (!origen) { addBot(`¿Desde dónde quieres ir a <strong>${destino}</strong>?`); }
-    else { addBot(fmtRuta(buscarRuta(origen, destino))); }
+    if (!destino) addBot('Dime origen y destino. Ej: <strong>"cómo ir de La Laguna al aeropuerto"</strong>');
+    else if (!origen) addBot(`¿Desde dónde quieres ir a <strong>${destino}</strong>?`);
+    else addBot(fmtRuta(buscarRuta(origen,destino)));
     setLoading(false); return;
   }
 
-  // Con contexto activo
-  if (ctx?.tipo === 'linea') {
-    hideTyping(); addBot(fmtHorarios(ctx.datos, ctx.num, detectaTipoHorario(text))); setLoading(false); return;
+  if (ctx?.tipo==='linea') {
+    hideTyping(); addBot(fmtHorarios(ctx.datos,ctx.num,detectaTipo(text))); setLoading(false); return;
   }
-  if (ctx?.tipo === 'parada') {
+  if (ctx?.tipo==='parada') {
     hideTyping(); addBot(fmtParadaInfo(ctx.num)); setLoading(false); return;
   }
 
